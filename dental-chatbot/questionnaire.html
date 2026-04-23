@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>치과 초진 설문지</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100dvh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #2b6cb0, #2c5282);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header .logo { font-size: 28px; }
+    header h1 { font-size: 18px; font-weight: 700; }
+    header p  { font-size: 12px; opacity: .8; margin-top: 2px; }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 28px 16px 60px;
+    }
+
+    .notice-box {
+      background: #ebf8ff;
+      border: 1.5px solid #90cdf4;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #2c5282;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    /* ── 섹션 카드 ─────────────────────────────────────── */
+    .section {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #2b6cb0;
+      border-bottom: 2px solid #bee3f8;
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title span { font-size: 18px; }
+
+    /* ── 필드 ──────────────────────────────────────────── */
+    .field { margin-bottom: 18px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label.field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 7px;
+    }
+    .required { color: #e53e3e; margin-left: 2px; }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="tel"],
+    textarea,
+    select {
+      width: 100%;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #2d3748;
+      transition: border-color .15s;
+      font-family: inherit;
+      background: #fff;
+    }
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    input[type="tel"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #2b6cb0;
+    }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+    /* 인라인 그리드 */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    @media (max-width: 500px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    /* ── 라디오/체크박스 공통 ─────────────────────────── */
+    .options { display: flex; flex-wrap: wrap; gap: 8px; }
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f7fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 7px 12px;
+      cursor: pointer;
+      transition: all .15s;
+      font-size: 13px;
+      color: #4a5568;
+      user-select: none;
+    }
+    .option-item:hover {
+      background: #ebf8ff;
+      border-color: #90cdf4;
+      color: #2b6cb0;
+    }
+    .option-item input[type="radio"],
+    .option-item input[type="checkbox"] {
+      width: auto;
+      border: none;
+      padding: 0;
+      margin: 0;
+      accent-color: #2b6cb0;
+    }
+    .option-item.checked {
+      background: #ebf8ff;
+      border-color: #2b6cb0;
+      color: #2b6cb0;
+      font-weight: 600;
+    }
+
+    /* ── 통증 척도 ────────────────────────────────────── */
+    .pain-scale {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .pain-track {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pain-track input[type="range"] {
+      flex: 1;
+      accent-color: #e53e3e;
+      height: 6px;
+      border: none;
+      padding: 0;
+    }
+    .pain-value {
+      min-width: 32px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #e53e3e;
+    }
+    .pain-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #718096;
+    }
+    .pain-desc {
+      font-size: 12px;
+      color: #718096;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    /* ── 치아 위치 선택 ───────────────────────────────── */
+    .tooth-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin: 8px 0;
+    }
+    .tooth-row {
+      display: flex;
+      gap: 3px;
+    }
+    .tooth-btn {
+      width: 34px;
+      height: 34px;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 6px;
+      background: #f7fafc;
+      font-size: 10px;
+      font-weight: 600;
+      color: #4a5568;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+      padding: 0;
+    }
+    .tooth-btn:hover { background: #ebf8ff; border-color: #90cdf4; }
+    .tooth-btn.selected {
+      background: #2b6cb0;
+      border-color: #2b6cb0;
+      color: #fff;
+    }
+    .tooth-divider {
+      font-size: 11px;
+      color: #a0aec0;
+      padding: 2px 8px;
+      align-self: center;
+    }
+    .jaw-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #718096;
+      text-align: center;
+      margin: 2px 0;
+    }
+    @media (max-width: 500px) {
+      .tooth-btn { width: 28px; height: 28px; font-size: 9px; }
+    }
+
+    /* ── 제출 버튼 ────────────────────────────────────── */
+    .submit-area {
+      text-align: center;
+      margin-top: 8px;
+    }
+    .submit-btn {
+      background: linear-gradient(135deg, #2b6cb0, #2c5282);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px 48px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      letter-spacing: -.3px;
+    }
+    .submit-btn:hover { opacity: .92; transform: translateY(-1px); }
+    .submit-btn:active { transform: translateY(0); }
+
+    /* ── 완료 화면 ────────────────────────────────────── */
+    #done-screen {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    #done-screen .done-icon { font-size: 64px; margin-bottom: 16px; }
+    #done-screen h2 { font-size: 22px; font-weight: 700; color: #2d3748; margin-bottom: 10px; }
+    #done-screen p { font-size: 14px; color: #718096; line-height: 1.7; margin-bottom: 24px; }
+    .btn-secondary {
+      background: #fff;
+      color: #2b6cb0;
+      border: 2px solid #2b6cb0;
+      border-radius: 10px;
+      padding: 11px 28px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      margin: 0 6px;
+    }
+    .btn-secondary:hover { background: #ebf8ff; }
+
+    /* 유효성 오류 */
+    .error-msg {
+      font-size: 11px;
+      color: #e53e3e;
+      margin-top: 5px;
+      display: none;
+    }
+    .field.error input,
+    .field.error textarea,
+    .field.error select {
+      border-color: #e53e3e;
+    }
+    .field.error .error-msg { display: block; }
+
+    /* 진행 표시 */
+    .progress-bar-wrap {
+      background: rgba(255,255,255,.25);
+      border-radius: 4px;
+      height: 4px;
+      flex: 1;
+      margin-left: 16px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      background: #fff;
+      height: 100%;
+      border-radius: 4px;
+      transition: width .4s ease;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🦷</span>
+  <div style="flex:1">
+    <h1>치과 초진 설문지</h1>
+    <p>정확한 진료를 위해 빠짐없이 작성해 주세요</p>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+</header>
+
+<div class="container" id="form-container">
+
+  <div class="notice-box">
+    ※ 작성하신 정보는 진료 목적으로만 사용되며 개인정보보호법에 따라 안전하게 관리됩니다.<br>
+    <strong>빨간 별표(<span style="color:#e53e3e">*</span>)가 표시된 항목은 필수 입력 사항입니다.</strong>
+  </div>
+
+  <form id="questionnaire-form" novalidate>
+
+    <!-- ① 기본 정보 -->
+    <div class="section">
+      <div class="section-title"><span>👤</span> 기본 정보</div>
+
+      <div class="grid-2">
+        <div class="field" id="f-name">
+          <label class="field-label" for="name">성함 <span class="required">*</span></label>
+          <input type="text" id="name" name="name" placeholder="홍길동" autocomplete="name" />
+          <div class="error-msg">성함을 입력해 주세요.</div>
+        </div>
+        <div class="field" id="f-birth">
+          <label class="field-label" for="birth">생년월일 <span class="required">*</span></label>
+          <input type="date" id="birth" name="birth" autocomplete="bday" />
+          <div class="error-msg">생년월일을 선택해 주세요.</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field" id="f-gender">
+          <label class="field-label">성별 <span class="required">*</span></label>
+          <div class="options" id="gender-options">
+            <label class="option-item"><input type="radio" name="gender" value="남성" onchange="onRadio(this)" /> 남성</label>
+            <label class="option-item"><input type="radio" name="gender" value="여성" onchange="onRadio(this)" /> 여성</label>
+          </div>
+          <div class="error-msg">성별을 선택해 주세요.</div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="phone">연락처</label>
+          <input type="tel" id="phone" name="phone" placeholder="010-0000-0000" autocomplete="tel" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ② 내원 목적 -->
+    <div class="section">
+      <div class="section-title"><span>🏥</span> 내원 목적</div>
+
+      <div class="field" id="f-visit-reason">
+        <label class="field-label">주요 내원 목적 <span class="required">*</span> <span style="font-size:11px;color:#718096;font-weight:400">(복수 선택 가능)</span></label>
+        <div class="options">
+          <label class="option-item"><input type="checkbox" name="visit_reason" value="통증/불편감" onchange="onCheck(this)" /> 😣 통증 / 불편감</label>
+          <label class="option-item"><input type="checkbox" name="visit_reason" value="충치치료" onchange="onCheck(this)" /> 🦷 충치 치료</label>
+          <label class="option-item"><input type="checkbox" name="visit_reason" value="임플란트" onchange="onCheck(this)" /> 🔩 임플란트</label>
+          <label class="option-item"><input type="checkbox" name="visit_reason" value="스케일링" onchange="onCheck(this)" /> ✨ 스케일링</label>
+          <label class="option-item"><input type="checkbox" name="visit_reason" value="잇몸치료" onchange="onCheck(this)" /> 🌿 잇몸 치료</label>
+          <label class="option-item"><input type="checkbox" name="visit_reason" value="교정" onchange="onCheck(this)" /> 📐 교정</label>
+          <label class="option-item"><input type="checkbox" name="visit_reason" value="미백" onchange="onCheck(this)" /> 💎 미백</label>
+          <label class="option-item"><input type="checkbox" name="visit_reason" value="틀니/보철" onchange="onCheck(this)" /> 🔧 틀니 / 보철</label>
+          <label class="option-item"><input type="checkbox" name="visit_reason" value="정기검진" onchange="onCheck(this)" /> 📋 정기 검진</label>
+          <label class="option-item"><input type="checkbox" name="visit_reason" value="기타" onchange="onCheck(this)" /> 기타</label>
+        </div>
+        <div class="error-msg">내원 목적을 하나 이상 선택해 주세요.</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="chief-complaint">주요 증상 / 불편 사항을 자세히 설명해 주세요</label>
+        <textarea id="chief-complaint" name="chief_complaint" placeholder="예) 오른쪽 위 어금니가 3일 전부터 찬 것을 먹으면 시리고 간헐적으로 욱씬거립니다."></textarea>
+      </div>
+    </div>
+
+    <!-- ③ 불편 부위 -->
+    <div class="section">
+      <div class="section-title"><span>📍</span> 불편 부위 선택</div>
+      <p style="font-size:12px;color:#718096;margin-bottom:12px">해당하는 치아 번호를 클릭해 선택하세요. (없으면 건너뛰어도 됩니다)</p>
+
+      <div class="tooth-area">
+        <div class="jaw-label">윗니 (상악)</div>
+        <div class="tooth-row" id="upper-row">
+          <!-- 상악 우측 →  좌측 -->
+        </div>
+        <div class="tooth-divider">── 좌 / 우 ──</div>
+        <div class="tooth-row" id="lower-row">
+          <!-- 하악 우측 →  좌측 -->
+        </div>
+        <div class="jaw-label">아랫니 (하악)</div>
+      </div>
+      <div id="selected-teeth-display" style="font-size:12px;color:#4a5568;margin-top:8px;min-height:18px;text-align:center"></div>
+      <input type="hidden" name="selected_teeth" id="selected-teeth-input" />
+    </div>
+
+    <!-- ④ 증상 상세 -->
+    <div class="section">
+      <div class="section-title"><span>🩺</span> 증상 상세</div>
+
+      <div class="field">
+        <label class="field-label">현재 통증이 있으신가요?</label>
+        <div class="options">
+          <label class="option-item"><input type="radio" name="has_pain" value="있음" onchange="onRadio(this);togglePainDetail(true)" /> 있음</label>
+          <label class="option-item"><input type="radio" name="has_pain" value="없음" onchange="onRadio(this);togglePainDetail(false)" /> 없음</label>
+        </div>
+      </div>
+
+      <div id="pain-detail" style="display:none">
+        <div class="field">
+          <label class="field-label">통증 강도 (0 = 통증 없음 / 10 = 참을 수 없는 통증)</label>
+          <div class="pain-scale">
+            <div class="pain-track">
+              <input type="range" name="pain_level" id="pain-slider" min="0" max="10" value="5"
+                     oninput="updatePainLabel(this.value)" />
+              <div class="pain-value" id="pain-value">5</div>
+            </div>
+            <div class="pain-labels"><span>0 통증 없음</span><span>5 보통</span><span>10 극심</span></div>
+            <div class="pain-desc" id="pain-desc"></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label class="field-label">통증 시작 시점</label>
+            <div class="options" style="flex-direction:column;gap:6px">
+              <label class="option-item"><input type="radio" name="pain_onset" value="오늘" onchange="onRadio(this)" /> 오늘</label>
+              <label class="option-item"><input type="radio" name="pain_onset" value="2~3일 이내" onchange="onRadio(this)" /> 2~3일 이내</label>
+              <label class="option-item"><input type="radio" name="pain_onset" value="1주일 이내" onchange="onRadio(this)" /> 1주일 이내</label>
+              <label class="option-item"><input type="radio" name="pain_onset" value="1개월 이내" onchange="onRadio(this)" /> 1개월 이내</label>
+              <label class="option-item"><input type="radio" name="pain_onset" value="1개월 이상" onchange="onRadio(this)" /> 1개월 이상</label>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">통증 양상</label>
+            <div class="options" style="flex-direction:column;gap:6px">
+              <label class="option-item"><input type="checkbox" name="pain_type" value="욱씬거림" onchange="onCheck(this)" /> 욱씬거림 (박동성)</label>
+              <label class="option-item"><input type="checkbox" name="pain_type" value="시림" onchange="onCheck(this)" /> 시림 (냉온 자극)</label>
+              <label class="option-item"><input type="checkbox" name="pain_type" value="씹을때통증" onchange="onCheck(this)" /> 씹을 때 통증</label>
+              <label class="option-item"><input type="checkbox" name="pain_type" value="지속통증" onchange="onCheck(this)" /> 지속적인 통증</label>
+              <label class="option-item"><input type="checkbox" name="pain_type" value="부기" onchange="onCheck(this)" /> 부기 / 붓기</label>
+              <label class="option-item"><input type="checkbox" name="pain_type" value="잇몸출혈" onchange="onCheck(this)" /> 잇몸 출혈</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">마지막 치과 내원 시기</label>
+        <div class="options">
+          <label class="option-item"><input type="radio" name="last_visit" value="처음방문" onchange="onRadio(this)" /> 처음 방문</label>
+          <label class="option-item"><input type="radio" name="last_visit" value="6개월이내" onchange="onRadio(this)" /> 6개월 이내</label>
+          <label class="option-item"><input type="radio" name="last_visit" value="1년이내" onchange="onRadio(this)" /> 1년 이내</label>
+          <label class="option-item"><input type="radio" name="last_visit" value="1년이상" onchange="onRadio(this)" /> 1년 이상</label>
+          <label class="option-item"><input type="radio" name="last_visit" value="기억안남" onchange="onRadio(this)" /> 기억 안 남</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">치과 치료에 대한 불안감</label>
+        <div class="options">
+          <label class="option-item"><input type="radio" name="dental_anxiety" value="없음" onchange="onRadio(this)" /> 없음</label>
+          <label class="option-item"><input type="radio" name="dental_anxiety" value="약간" onchange="onRadio(this)" /> 약간 있음</label>
+          <label class="option-item"><input type="radio" name="dental_anxiety" value="많음" onchange="onRadio(this)" /> 많이 있음</label>
+          <label class="option-item"><input type="radio" name="dental_anxiety" value="극심" onchange="onRadio(this)" /> 극심한 공포</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑤ 전신 건강 -->
+    <div class="section">
+      <div class="section-title"><span>💊</span> 전신 건강 상태</div>
+
+      <div class="field">
+        <label class="field-label">현재 앓고 있는 전신 질환 <span style="font-size:11px;color:#718096;font-weight:400">(복수 선택 가능)</span></label>
+        <div class="options">
+          <label class="option-item"><input type="checkbox" name="systemic" value="고혈압" onchange="onCheck(this)" /> 고혈압</label>
+          <label class="option-item"><input type="checkbox" name="systemic" value="당뇨" onchange="onCheck(this)" /> 당뇨</label>
+          <label class="option-item"><input type="checkbox" name="systemic" value="심장질환" onchange="onCheck(this)" /> 심장 질환</label>
+          <label class="option-item"><input type="checkbox" name="systemic" value="뇌혈관질환" onchange="onCheck(this)" /> 뇌혈관 질환</label>
+          <label class="option-item"><input type="checkbox" name="systemic" value="골다공증" onchange="onCheck(this)" /> 골다공증</label>
+          <label class="option-item"><input type="checkbox" name="systemic" value="갑상선질환" onchange="onCheck(this)" /> 갑상선 질환</label>
+          <label class="option-item"><input type="checkbox" name="systemic" value="신장질환" onchange="onCheck(this)" /> 신장 질환</label>
+          <label class="option-item"><input type="checkbox" name="systemic" value="간질환" onchange="onCheck(this)" /> 간 질환</label>
+          <label class="option-item"><input type="checkbox" name="systemic" value="혈액응고장애" onchange="onCheck(this)" /> 혈액응고 장애</label>
+          <label class="option-item"><input type="checkbox" name="systemic" value="없음" onchange="onCheck(this)" id="systemic-none" /> 해당 없음</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">현재 복용 중인 약물</label>
+        <div class="options" style="margin-bottom:10px">
+          <label class="option-item"><input type="radio" name="has_medication" value="없음" onchange="onRadio(this);toggleMedDetail(false)" /> 없음</label>
+          <label class="option-item"><input type="radio" name="has_medication" value="있음" onchange="onRadio(this);toggleMedDetail(true)" /> 있음</label>
+        </div>
+        <div id="med-detail" style="display:none">
+          <input type="text" name="medications" placeholder="예) 아스피린, 혈압약, 당뇨약 등 약 이름이나 종류를 적어주세요" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">알레르기 여부</label>
+        <div class="options" style="margin-bottom:10px">
+          <label class="option-item"><input type="radio" name="has_allergy" value="없음" onchange="onRadio(this);toggleAllergyDetail(false)" /> 없음</label>
+          <label class="option-item"><input type="radio" name="has_allergy" value="있음" onchange="onRadio(this);toggleAllergyDetail(true)" /> 있음</label>
+        </div>
+        <div id="allergy-detail" style="display:none">
+          <div class="options" style="margin-bottom:8px">
+            <label class="option-item"><input type="checkbox" name="allergy_type" value="국소마취제" onchange="onCheck(this)" /> 국소마취제</label>
+            <label class="option-item"><input type="checkbox" name="allergy_type" value="페니실린/항생제" onchange="onCheck(this)" /> 페니실린/항생제</label>
+            <label class="option-item"><input type="checkbox" name="allergy_type" value="아스피린/소염진통제" onchange="onCheck(this)" /> 아스피린/소염진통제</label>
+            <label class="option-item"><input type="checkbox" name="allergy_type" value="라텍스" onchange="onCheck(this)" /> 라텍스</label>
+            <label class="option-item"><input type="checkbox" name="allergy_type" value="기타" onchange="onCheck(this)" /> 기타</label>
+          </div>
+          <input type="text" name="allergy_detail" placeholder="알레르기 물질을 구체적으로 적어주세요" />
+        </div>
+      </div>
+
+      <div class="field" id="f-pregnancy" style="display:none">
+        <label class="field-label">임신 또는 수유 중이신가요?</label>
+        <div class="options">
+          <label class="option-item"><input type="radio" name="pregnancy" value="해당없음" onchange="onRadio(this)" /> 해당 없음</label>
+          <label class="option-item"><input type="radio" name="pregnancy" value="임신중" onchange="onRadio(this)" /> 임신 중</label>
+          <label class="option-item"><input type="radio" name="pregnancy" value="수유중" onchange="onRadio(this)" /> 수유 중</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑥ 생활 습관 -->
+    <div class="section">
+      <div class="section-title"><span>🏃</span> 생활 습관</div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label class="field-label">칫솔질 횟수</label>
+          <div class="options" style="flex-direction:column;gap:6px">
+            <label class="option-item"><input type="radio" name="brushing" value="하루1회" onchange="onRadio(this)" /> 하루 1회</label>
+            <label class="option-item"><input type="radio" name="brushing" value="하루2회" onchange="onRadio(this)" /> 하루 2회</label>
+            <label class="option-item"><input type="radio" name="brushing" value="하루3회" onchange="onRadio(this)" /> 하루 3회 이상</label>
+            <label class="option-item"><input type="radio" name="brushing" value="불규칙" onchange="onRadio(this)" /> 불규칙</label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">구강 위생 보조 용품 사용 <span style="font-size:11px;color:#718096;font-weight:400">(복수 선택)</span></label>
+          <div class="options" style="flex-direction:column;gap:6px">
+            <label class="option-item"><input type="checkbox" name="oral_care" value="치실" onchange="onCheck(this)" /> 치실</label>
+            <label class="option-item"><input type="checkbox" name="oral_care" value="치간칫솔" onchange="onCheck(this)" /> 치간 칫솔</label>
+            <label class="option-item"><input type="checkbox" name="oral_care" value="구강세정기" onchange="onCheck(this)" /> 구강 세정기</label>
+            <label class="option-item"><input type="checkbox" name="oral_care" value="전동칫솔" onchange="onCheck(this)" /> 전동 칫솔</label>
+            <label class="option-item"><input type="checkbox" name="oral_care" value="사용안함" onchange="onCheck(this)" /> 사용 안 함</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label class="field-label">흡연 여부</label>
+          <div class="options">
+            <label class="option-item"><input type="radio" name="smoking" value="비흡연" onchange="onRadio(this)" /> 비흡연</label>
+            <label class="option-item"><input type="radio" name="smoking" value="흡연" onchange="onRadio(this)" /> 흡연</label>
+            <label class="option-item"><input type="radio" name="smoking" value="금연중" onchange="onRadio(this)" /> 금연 중</label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">음주 빈도</label>
+          <div class="options">
+            <label class="option-item"><input type="radio" name="drinking" value="거의안함" onchange="onRadio(this)" /> 거의 안 함</label>
+            <label class="option-item"><input type="radio" name="drinking" value="월1~2회" onchange="onRadio(this)" /> 월 1~2회</label>
+            <label class="option-item"><input type="radio" name="drinking" value="주1~2회" onchange="onRadio(this)" /> 주 1~2회</label>
+            <label class="option-item"><input type="radio" name="drinking" value="거의매일" onchange="onRadio(this)" /> 거의 매일</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑦ 개인정보 동의 -->
+    <div class="section">
+      <div class="section-title"><span>📜</span> 개인정보 수집·이용 동의</div>
+      <div style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:12px;color:#4a5568;line-height:1.7;margin-bottom:14px">
+        <strong>수집 항목:</strong> 성명, 생년월일, 성별, 연락처, 건강 정보<br>
+        <strong>수집 목적:</strong> 치과 진료, 치료 계획 수립, 건강 관리<br>
+        <strong>보유 기간:</strong> 관련 법령에 따라 최대 5년 보관<br>
+        위 개인정보 수집·이용에 동의하지 않으실 경우 서비스 이용이 제한될 수 있습니다.
+      </div>
+      <div class="field" id="f-privacy">
+        <label class="option-item" style="font-weight:600;color:#2d3748">
+          <input type="checkbox" name="privacy_agree" id="privacy-agree" onchange="onCheck(this)" />
+          개인정보 수집·이용에 동의합니다. <span class="required">*</span>
+        </label>
+        <div class="error-msg">개인정보 수집·이용에 동의해 주세요.</div>
+      </div>
+    </div>
+
+    <div class="submit-area">
+      <button type="submit" class="submit-btn">설문지 제출하기 →</button>
+    </div>
+
+  </form>
+</div>
+
+<!-- 완료 화면 -->
+<div id="done-screen" class="container">
+  <div class="done-icon">✅</div>
+  <h2>설문지 제출이 완료되었습니다!</h2>
+  <p>
+    작성해 주신 내용을 바탕으로 원활한 진료를 진행하겠습니다.<br>
+    접수 창구에 제출 완료를 알려주시면 감사하겠습니다.
+  </p>
+  <button class="btn-secondary" onclick="window.location='/'">🦷 AI 상담 시작하기</button>
+  <button class="btn-secondary" onclick="resetForm()">📋 다시 작성하기</button>
+</div>
+
+<script>
+  // ── 치아 차트 생성 ────────────────────────────────────────────────────────
+  // FDI 번호 기준 (상악 우→좌: 18~11, 21~28 / 하악 우→좌: 48~41, 31~38)
+  const upperTeeth = [18,17,16,15,14,13,12,11, 21,22,23,24,25,26,27,28];
+  const lowerTeeth = [48,47,46,45,44,43,42,41, 31,32,33,34,35,36,37,38];
+  const selectedTeeth = new Set();
+
+  function buildTeethRow(container, teeth) {
+    teeth.forEach((num, i) => {
+      if (i === 8) {
+        const div = document.createElement('div');
+        div.className = 'tooth-divider';
+        div.textContent = '|';
+        container.appendChild(div);
+      }
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tooth-btn';
+      btn.textContent = num;
+      btn.dataset.tooth = num;
+      btn.addEventListener('click', () => toggleTooth(btn, num));
+      container.appendChild(btn);
+    });
+  }
+
+  function toggleTooth(btn, num) {
+    if (selectedTeeth.has(num)) {
+      selectedTeeth.delete(num);
+      btn.classList.remove('selected');
+    } else {
+      selectedTeeth.add(num);
+      btn.classList.add('selected');
+    }
+    const sorted = [...selectedTeeth].sort((a,b) => a-b);
+    document.getElementById('selected-teeth-input').value = sorted.join(',');
+    document.getElementById('selected-teeth-display').textContent =
+      sorted.length ? '선택된 치아: ' + sorted.join(', ') : '';
+    updateProgress();
+  }
+
+  buildTeethRow(document.getElementById('upper-row'), upperTeeth);
+  buildTeethRow(document.getElementById('lower-row'), lowerTeeth);
+
+  // ── 통증 슬라이더 ─────────────────────────────────────────────────────────
+  const painDescs = [
+    '통증 없음', '거의 없음', '약간 불편', '가벼운 통증', '불편함',
+    '보통 통증', '꽤 아픔', '심한 통증', '매우 심함', '거의 참기 어려움', '극심한 통증'
+  ];
+  function updatePainLabel(v) {
+    document.getElementById('pain-value').textContent = v;
+    document.getElementById('pain-desc').textContent = painDescs[v] || '';
+    updateProgress();
+  }
+  updatePainLabel(5);
+
+  // ── 토글 헬퍼 ────────────────────────────────────────────────────────────
+  function togglePainDetail(show) {
+    document.getElementById('pain-detail').style.display = show ? 'block' : 'none';
+    updateProgress();
+  }
+  function toggleMedDetail(show) {
+    document.getElementById('med-detail').style.display = show ? 'block' : 'none';
+  }
+  function toggleAllergyDetail(show) {
+    document.getElementById('allergy-detail').style.display = show ? 'block' : 'none';
+  }
+
+  // 성별 여성 선택 시 임신 질문 표시
+  document.querySelectorAll('input[name="gender"]').forEach(r => {
+    r.addEventListener('change', () => {
+      document.getElementById('f-pregnancy').style.display =
+        r.value === '여성' ? 'block' : 'none';
+    });
+  });
+
+  // "해당 없음" 체크 시 다른 전신질환 체크 해제
+  document.getElementById('systemic-none').addEventListener('change', function() {
+    if (this.checked) {
+      document.querySelectorAll('input[name="systemic"]').forEach(cb => {
+        if (cb !== this) { cb.checked = false; cb.closest('.option-item').classList.remove('checked'); }
+      });
+    }
+    onCheck(this);
+  });
+
+  // ── option-item 시각적 토글 ──────────────────────────────────────────────
+  function onRadio(input) {
+    const name = input.name;
+    document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+      r.closest('.option-item').classList.toggle('checked', r.checked);
+    });
+    updateProgress();
+  }
+  function onCheck(input) {
+    input.closest('.option-item').classList.toggle('checked', input.checked);
+    updateProgress();
+  }
+
+  // ── 진행률 계산 ──────────────────────────────────────────────────────────
+  function updateProgress() {
+    const required = ['name', 'birth'];
+    const radioGroups = ['gender', 'visit_reason_check'];
+    let filled = 0;
+    const total = 5;
+
+    if (document.getElementById('name').value.trim()) filled++;
+    if (document.getElementById('birth').value) filled++;
+    if (document.querySelector('input[name="gender"]:checked')) filled++;
+    if (document.querySelectorAll('input[name="visit_reason"]:checked').length) filled++;
+    if (document.getElementById('privacy-agree').checked) filled++;
+
+    document.getElementById('progress-fill').style.width = (filled / total * 100) + '%';
+  }
+
+  // ── 유효성 검사 ──────────────────────────────────────────────────────────
+  function validate() {
+    let valid = true;
+
+    function setError(id, hasError) {
+      document.getElementById(id).classList.toggle('error', hasError);
+      if (hasError) valid = false;
+    }
+
+    setError('f-name', !document.getElementById('name').value.trim());
+    setError('f-birth', !document.getElementById('birth').value);
+    setError('f-gender', !document.querySelector('input[name="gender"]:checked'));
+    setError('f-visit-reason', !document.querySelectorAll('input[name="visit_reason"]:checked').length);
+    setError('f-privacy', !document.getElementById('privacy-agree').checked);
+
+    return valid;
+  }
+
+  // ── 폼 제출 ──────────────────────────────────────────────────────────────
+  document.getElementById('questionnaire-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (!validate()) {
+      const firstError = document.querySelector('.field.error');
+      if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    const data = new FormData(this);
+    const payload = {};
+    for (const [key, value] of data.entries()) {
+      if (payload[key]) {
+        if (!Array.isArray(payload[key])) payload[key] = [payload[key]];
+        payload[key].push(value);
+      } else {
+        payload[key] = value;
+      }
+    }
+
+    try {
+      const resp = await fetch('/questionnaire/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (resp.ok) showDone();
+      else { alert('제출 중 오류가 발생했습니다. 다시 시도해 주세요.'); }
+    } catch {
+      // 서버 없이도 완료 화면 표시 (오프라인 / 개발 환경)
+      showDone();
+    }
+  });
+
+  function showDone() {
+    document.getElementById('form-container').style.display = 'none';
+    const done = document.getElementById('done-screen');
+    done.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetForm() {
+    document.getElementById('questionnaire-form').reset();
+    selectedTeeth.clear();
+    document.querySelectorAll('.tooth-btn.selected').forEach(b => b.classList.remove('selected'));
+    document.getElementById('selected-teeth-display').textContent = '';
+    document.querySelectorAll('.option-item.checked').forEach(el => el.classList.remove('checked'));
+    document.getElementById('pain-detail').style.display = 'none';
+    document.getElementById('med-detail').style.display = 'none';
+    document.getElementById('allergy-detail').style.display = 'none';
+    document.getElementById('f-pregnancy').style.display = 'none';
+    updatePainLabel(5);
+    document.getElementById('done-screen').style.display = 'none';
+    document.getElementById('form-container').style.display = 'block';
+    window.scrollTo({ top: 0 });
+    updateProgress();
+  }
+</script>
+</body>
+</html>
