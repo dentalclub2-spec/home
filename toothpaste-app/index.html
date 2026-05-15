@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>치약 선택 가이드</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2b6cb0;
+      --blue-dark: #2c5282;
+      --blue-light: #ebf8ff;
+      --green: #38a169;
+      --green-dark: #276749;
+      --gray-50: #f7fafc;
+      --gray-100: #f0f4f8;
+      --gray-200: #e2e8f0;
+      --gray-400: #a0aec0;
+      --gray-500: #718096;
+      --gray-700: #4a5568;
+      --gray-900: #1a202c;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-900);
+      min-height: 100dvh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #2b6cb0, #1a365d);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.2);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    header .logo { font-size: 32px; }
+    header h1 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+    header p  { font-size: 12px; opacity: .75; margin-top: 2px; }
+
+    /* ── Main Container ── */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 20px;
+    }
+
+    /* ── Step Indicator ── */
+    .steps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 32px;
+      justify-content: center;
+    }
+    .step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      transition: all .3s;
+    }
+    .step-dot.active { background: var(--blue); color: #fff; }
+    .step-dot.done   { background: var(--green); color: #fff; }
+    .step-line {
+      flex: 1;
+      max-width: 60px;
+      height: 2px;
+      background: var(--gray-200);
+      transition: background .3s;
+    }
+    .step-line.done { background: var(--green); }
+
+    /* ── Section Card ── */
+    .section-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.07);
+      animation: fadeIn .3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+      letter-spacing: -.4px;
+    }
+    .section-desc {
+      font-size: 14px;
+      color: var(--gray-500);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    /* ── Concern Grid ── */
+    .concern-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+    }
+    .concern-card {
+      border: 2px solid var(--gray-200);
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      user-select: none;
+      background: #fff;
+    }
+    .concern-card:hover {
+      border-color: #90cdf4;
+      background: var(--blue-light);
+      transform: translateY(-2px);
+    }
+    .concern-card.selected {
+      border-color: var(--blue);
+      background: var(--blue-light);
+      box-shadow: 0 0 0 3px rgba(43,108,176,.15);
+    }
+    .concern-card .icon { font-size: 32px; margin-bottom: 8px; }
+    .concern-card .label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+    .concern-card .sub {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-top: 3px;
+    }
+    .concern-card.selected .label { color: var(--blue-dark); }
+
+    /* ── Age / Sensitivity ── */
+    .option-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .option-btn {
+      border: 2px solid var(--gray-200);
+      border-radius: 40px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-700);
+      background: #fff;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .option-btn:hover { border-color: #90cdf4; background: var(--blue-light); }
+    .option-btn.selected {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #fff;
+    }
+
+    /* ── CTA Button ── */
+    .cta-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 28px;
+      transition: opacity .15s;
+      letter-spacing: -.2px;
+    }
+    .cta-btn:hover { opacity: .9; }
+    .cta-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Result ── */
+    .result-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .result-header .badge {
+      display: inline-block;
+      background: #c6f6d5;
+      color: var(--green-dark);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .result-header h2 { font-size: 24px; font-weight: 800; letter-spacing: -.4px; }
+    .result-header p  { font-size: 14px; color: var(--gray-500); margin-top: 6px; }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 18px;
+    }
+    .product-card {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 18px;
+      padding: 22px;
+      background: #fff;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .product-card:hover {
+      border-color: #90cdf4;
+      box-shadow: 0 4px 20px rgba(43,108,176,.12);
+      transform: translateY(-3px);
+    }
+    .product-card.best::before {
+      content: '추천';
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    .product-emoji { font-size: 40px; margin-bottom: 12px; text-align: center; }
+    .product-brand {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--blue);
+      margin-bottom: 4px;
+    }
+    .product-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+      letter-spacing: -.3px;
+      line-height: 1.3;
+    }
+    .product-desc {
+      font-size: 13px;
+      color: var(--gray-500);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag {
+      background: var(--gray-100);
+      color: var(--gray-700);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .tag.highlight {
+      background: #bee3f8;
+      color: var(--blue-dark);
+    }
+    .product-price {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--gray-500);
+      border-top: 1px solid var(--gray-100);
+      padding-top: 10px;
+    }
+    .product-price strong {
+      color: var(--gray-900);
+      font-size: 15px;
+    }
+
+    /* ── Filter Chips ── */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .filter-chip {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 40px;
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-700);
+      background: #fff;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .filter-chip:hover { border-color: #90cdf4; color: var(--blue); }
+    .filter-chip.active {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .no-result {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--gray-400);
+      font-size: 15px;
+    }
+
+    /* ── Restart ── */
+    .restart-btn {
+      background: var(--gray-100);
+      color: var(--gray-700);
+      border: 2px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 14px;
+      transition: all .15s;
+    }
+    .restart-btn:hover { background: var(--gray-200); }
+
+    @media (max-width: 600px) {
+      .container { padding: 20px 14px; }
+      .section-card { padding: 22px 18px; }
+      .concern-grid { grid-template-columns: repeat(2, 1fr); }
+      .product-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🪥</span>
+  <div>
+    <h1>치약 선택 가이드</h1>
+    <p>내 구강 고민에 맞는 치약을 찾아드립니다</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Step Indicator -->
+  <div class="steps" id="steps">
+    <div class="step-dot active" id="step1">1</div>
+    <div class="step-line" id="line1"></div>
+    <div class="step-dot" id="step2">2</div>
+    <div class="step-line" id="line2"></div>
+    <div class="step-dot" id="step3">3</div>
+    <div class="step-line" id="line3"></div>
+    <div class="step-dot" id="step4">✓</div>
+  </div>
+
+  <!-- ── Step 1: 구강 고민 ── -->
+  <div class="section-card" id="view-step1">
+    <div class="section-title">어떤 구강 고민이 있으신가요?</div>
+    <div class="section-desc">해당하는 항목을 모두 선택해 주세요. (복수 선택 가능)</div>
+
+    <div class="concern-grid" id="concern-grid">
+      <div class="concern-card" data-id="whitening" onclick="toggleConcern(this)">
+        <div class="icon">✨</div>
+        <div class="label">치아 미백</div>
+        <div class="sub">누렇거나 착색 걱정</div>
+      </div>
+      <div class="concern-card" data-id="sensitive" onclick="toggleConcern(this)">
+        <div class="icon">🥶</div>
+        <div class="label">시린 이</div>
+        <div class="sub">차갑거나 뜨거울 때 통증</div>
+      </div>
+      <div class="concern-card" data-id="cavity" onclick="toggleConcern(this)">
+        <div class="icon">🦷</div>
+        <div class="label">충치 예방</div>
+        <div class="sub">충치·법랑질 보호</div>
+      </div>
+      <div class="concern-card" data-id="gum" onclick="toggleConcern(this)">
+        <div class="icon">🩸</div>
+        <div class="label">잇몸 케어</div>
+        <div class="sub">잇몸 출혈·붓기·염증</div>
+      </div>
+      <div class="concern-card" data-id="breath" onclick="toggleConcern(this)">
+        <div class="icon">💨</div>
+        <div class="label">구취 제거</div>
+        <div class="sub">입냄새·구강 청결</div>
+      </div>
+      <div class="concern-card" data-id="tartar" onclick="toggleConcern(this)">
+        <div class="icon">🔬</div>
+        <div class="label">치석·플라그</div>
+        <div class="sub">치석 형성 억제</div>
+      </div>
+      <div class="concern-card" data-id="kids" onclick="toggleConcern(this)">
+        <div class="icon">👶</div>
+        <div class="label">어린이용</div>
+        <div class="sub">유아·초등 안전 성분</div>
+      </div>
+      <div class="concern-card" data-id="natural" onclick="toggleConcern(this)">
+        <div class="icon">🌿</div>
+        <div class="label">천연·한방</div>
+        <div class="sub">자극 없는 성분 선호</div>
+      </div>
+    </div>
+
+    <button class="cta-btn" id="btn-step1" onclick="goStep(2)" disabled>다음 단계 →</button>
+  </div>
+
+  <!-- ── Step 2: 연령 ── -->
+  <div class="section-card" id="view-step2" style="display:none">
+    <div class="section-title">연령대를 선택해 주세요</div>
+    <div class="section-desc">연령에 따라 적합한 불소 농도와 성분이 달라집니다.</div>
+
+    <div class="option-group" id="age-group">
+      <button class="option-btn" data-val="child" onclick="selectOption('age', this)">🐥 만 3-6세</button>
+      <button class="option-btn" data-val="child2" onclick="selectOption('age', this)">🧒 만 7-12세</button>
+      <button class="option-btn" data-val="teen" onclick="selectOption('age', this)">👦 청소년</button>
+      <button class="option-btn" data-val="adult" onclick="selectOption('age', this)">🧑 성인</button>
+      <button class="option-btn" data-val="senior" onclick="selectOption('age', this)">👴 시니어 (50대+)</button>
+    </div>
+
+    <button class="cta-btn" id="btn-step2" onclick="goStep(3)" disabled>다음 단계 →</button>
+  </div>
+
+  <!-- ── Step 3: 민감도 ── -->
+  <div class="section-card" id="view-step3" style="display:none">
+    <div class="section-title">잇몸·치아 민감도는 어느 정도인가요?</div>
+    <div class="section-desc">민감도에 따라 연마제 함량과 자극 강도가 조절됩니다.</div>
+
+    <div class="option-group" id="sensitivity-group">
+      <button class="option-btn" data-val="low" onclick="selectOption('sensitivity', this)">😊 민감하지 않음</button>
+      <button class="option-btn" data-val="mid" onclick="selectOption('sensitivity', this)">😐 보통</button>
+      <button class="option-btn" data-val="high" onclick="selectOption('sensitivity', this)">😣 매우 민감함</button>
+    </div>
+
+    <button class="cta-btn" id="btn-step3" onclick="goStep(4)" disabled>치약 추천 받기 🪥</button>
+  </div>
+
+  <!-- ── Step 4: 결과 ── -->
+  <div class="section-card" id="view-step4" style="display:none">
+    <div class="result-header">
+      <div class="badge">맞춤 추천 완료</div>
+      <h2 id="result-title">추천 치약</h2>
+      <p id="result-desc"></p>
+    </div>
+
+    <!-- 필터 바 -->
+    <div class="filter-bar" id="filter-bar"></div>
+
+    <!-- 제품 그리드 -->
+    <div class="product-grid" id="product-grid"></div>
+
+    <button class="restart-btn" onclick="restart()">🔄 다시 선택하기</button>
+  </div>
+
+</div>
+
+<script>
+// ── 데이터 ────────────────────────────────────────────────────────────────────
+const PRODUCTS = [
+  {
+    id: 'median-whitening',
+    brand: '동아제약',
+    name: '메디안 어드밴스드 화이트닝',
+    emoji: '🦷',
+    desc: '이산화티타늄 미세입자로 착색 제거. 불소 1,450ppm으로 충치 이중 예방. 국내 치약 판매 1위 기록.',
+    tags: ['whitening', 'cavity'],
+    tagLabels: ['미백', '충치예방'],
+    sensitivity: ['low', 'mid'],
+    age: ['teen', 'adult', 'senior'],
+    price: '약 3,500원 / 120g',
+    highlight: true,
+  },
+  {
+    id: 'median-triple',
+    brand: '동아제약',
+    name: '메디안 트리플케어',
+    emoji: '🪥',
+    desc: '충치 예방·잇몸 케어·미백을 한 번에. 항균 성분 세티리모늄 클로라이드 포함. 전 가족 사용 가능.',
+    tags: ['whitening', 'cavity', 'gum'],
+    tagLabels: ['미백', '충치예방', '잇몸'],
+    sensitivity: ['low', 'mid'],
+    age: ['teen', 'adult', 'senior'],
+    price: '약 4,200원 / 120g',
+    highlight: false,
+  },
+  {
+    id: 'perioe-total7',
+    brand: 'LG생활건강 (페리오)',
+    name: '페리오 토탈7 오리지널',
+    emoji: '✨',
+    desc: '7가지 구강 케어 기능 탑재. 잇몸 염증·구취·미백·충치·치석 등 종합 관리. 청량감 강한 민트향.',
+    tags: ['whitening', 'cavity', 'gum', 'breath', 'tartar'],
+    tagLabels: ['미백', '충치예방', '잇몸', '구취', '치석'],
+    sensitivity: ['low', 'mid'],
+    age: ['teen', 'adult'],
+    price: '약 4,500원 / 120g',
+    highlight: false,
+  },
+  {
+    id: 'perioe-sensitive',
+    brand: 'LG생활건강 (페리오)',
+    name: '페리오 46CM 시린이',
+    emoji: '🥶',
+    desc: '질산칼륨 성분이 상아세관을 막아 시린 이 증상 완화. 순한 저자극 포뮬러. 치과의사 추천.',
+    tags: ['sensitive', 'cavity'],
+    tagLabels: ['시린이', '충치예방'],
+    sensitivity: ['mid', 'high'],
+    age: ['adult', 'senior'],
+    price: '약 4,800원 / 100g',
+    highlight: false,
+  },
+  {
+    id: '2080-whitening',
+    brand: '애경 (2080)',
+    name: '2080 어드밴스드 화이트닝',
+    emoji: '🌟',
+    desc: '폴리인산나트륨 성분으로 치아 표면 착색 제거. 고농도 불소 1,450ppm. 에나멜 보호 기능.',
+    tags: ['whitening', 'cavity'],
+    tagLabels: ['미백', '충치예방'],
+    sensitivity: ['low', 'mid'],
+    age: ['teen', 'adult', 'senior'],
+    price: '약 3,800원 / 120g',
+    highlight: true,
+  },
+  {
+    id: '2080-pro',
+    brand: '애경 (2080)',
+    name: '2080 프로 잇몸케어',
+    emoji: '🩸',
+    desc: '비타민E·파쇄치모 성분으로 잇몸 염증·출혈 케어. 항균 성분으로 치주 질환 예방. 순한 저자극.',
+    tags: ['gum', 'breath', 'tartar'],
+    tagLabels: ['잇몸', '구취', '치석'],
+    sensitivity: ['mid', 'high'],
+    age: ['adult', 'senior'],
+    price: '약 4,200원 / 120g',
+    highlight: false,
+  },
+  {
+    id: '2080-sensitive',
+    brand: '애경 (2080)',
+    name: '2080 시린이 케어',
+    emoji: '🧊',
+    desc: '염화스트론튬 성분으로 시린 이 빠른 완화. 과민성 치아 전문 포뮬러. 불소 1,100ppm.',
+    tags: ['sensitive', 'gum'],
+    tagLabels: ['시린이', '잇몸'],
+    sensitivity: ['high'],
+    age: ['adult', 'senior'],
+    price: '약 5,200원 / 100g',
+    highlight: false,
+  },
+  {
+    id: 'jukham-original',
+    brand: 'LG생활건강',
+    name: '죽염 치약 민트',
+    emoji: '🌿',
+    desc: '9번 구운 죽염이 잇몸 강화·구취 제거. 전통 한방 성분. 자극 없는 저발포 포뮬러. 오랜 스테디셀러.',
+    tags: ['gum', 'breath', 'natural'],
+    tagLabels: ['잇몸', '구취', '한방'],
+    sensitivity: ['mid', 'high'],
+    age: ['adult', 'senior'],
+    price: '약 4,000원 / 100g',
+    highlight: false,
+  },
+  {
+    id: 'jukham-2080',
+    brand: '애경',
+    name: '죽염 2080 잇몸케어',
+    emoji: '🏺',
+    desc: '죽염+불소 1,450ppm 조합. 잇몸 케어와 충치 예방을 동시에. 한방 감초·황기 추출물 함유.',
+    tags: ['gum', 'cavity', 'natural'],
+    tagLabels: ['잇몸', '충치예방', '한방'],
+    sensitivity: ['mid', 'high'],
+    age: ['adult', 'senior'],
+    price: '약 4,800원 / 120g',
+    highlight: false,
+  },
+  {
+    id: 'sirinmed',
+    brand: '부광약품',
+    name: '시린메드 F 시린이',
+    emoji: '❄️',
+    desc: '1,000ppm 불소+질산칼륨으로 시린 이 전문 케어. 마모도가 낮아 예민한 치아에 최적화. 약국·마트 판매.',
+    tags: ['sensitive', 'cavity'],
+    tagLabels: ['시린이 전문', '충치예방'],
+    sensitivity: ['high'],
+    age: ['adult', 'senior'],
+    price: '약 6,000원 / 100g',
+    highlight: true,
+  },
+  {
+    id: 'perioe-kids',
+    brand: 'LG생활건강 (페리오)',
+    name: '페리오 키즈 버블민트',
+    emoji: '👶',
+    desc: '불소 500ppm 어린이 전용 농도. 인공색소·파라벤 무첨가. 달콤한 거품이 양치를 즐겁게.',
+    tags: ['kids', 'cavity'],
+    tagLabels: ['어린이', '충치예방'],
+    sensitivity: ['low', 'mid', 'high'],
+    age: ['child', 'child2'],
+    price: '약 3,500원 / 80g',
+    highlight: false,
+  },
+  {
+    id: '2080-kids',
+    brand: '애경 (2080)',
+    name: '2080 키즈 스트로베리',
+    emoji: '🍓',
+    desc: '딸기향 저불소(500ppm) 어린이용. 삼키지 않는 습관을 키워주는 안전 성분. 치과의사 추천 제품.',
+    tags: ['kids', 'cavity'],
+    tagLabels: ['어린이', '충치예방'],
+    sensitivity: ['low', 'mid', 'high'],
+    age: ['child', 'child2'],
+    price: '약 3,800원 / 75g',
+    highlight: false,
+  },
+  {
+    id: 'pumtech-itchi',
+    brand: '펌테크',
+    name: '잇치 허벌 치약',
+    emoji: '🌱',
+    desc: '30종 한방 허브 성분 함유. 향균·항염 작용으로 잇몸 건강 케어. 화학 계면활성제 무첨가 저자극.',
+    tags: ['gum', 'natural', 'breath'],
+    tagLabels: ['잇몸', '천연·한방', '구취'],
+    sensitivity: ['high'],
+    age: ['adult', 'senior'],
+    price: '약 5,500원 / 100g',
+    highlight: false,
+  },
+  {
+    id: 'dental-clinic',
+    brand: 'LG생활건강',
+    name: '덴탈클리닉 잇몸케어',
+    emoji: '🏥',
+    desc: '시클로덱스트린이 구취 원인균을 포집·제거. 염화세틸피리디늄 함유로 살균 효과. 장시간 구취 억제.',
+    tags: ['breath', 'gum', 'tartar'],
+    tagLabels: ['구취', '잇몸', '치석'],
+    sensitivity: ['low', 'mid'],
+    age: ['adult', 'senior'],
+    price: '약 4,200원 / 100g',
+    highlight: false,
+  },
+  {
+    id: 'close-up',
+    brand: '유니레버 (클로즈업)',
+    name: '클로즈업 에버프레쉬',
+    emoji: '💨',
+    desc: '아연+불소로 구취 원인균 99% 제거. 청량감 오래 지속되는 쿨민트 포뮬러. 청결한 구강 환경 유지.',
+    tags: ['breath', 'cavity'],
+    tagLabels: ['구취제거', '충치예방'],
+    sensitivity: ['low', 'mid'],
+    age: ['teen', 'adult'],
+    price: '약 3,200원 / 100g',
+    highlight: false,
+  },
+  {
+    id: 'sensodyne',
+    brand: 'GSK (센소다인)',
+    name: '센소다인 리페어&프로텍트',
+    emoji: '🛡️',
+    desc: '인산칼슘이 손상된 에나멜을 재광화. 치과의사 추천 시린 이 전문 브랜드. 꾸준한 사용으로 시린 이 근본 개선.',
+    tags: ['sensitive', 'cavity', 'gum'],
+    tagLabels: ['시린이 전문', '에나멜 보호'],
+    sensitivity: ['high'],
+    age: ['adult', 'senior'],
+    price: '약 7,500원 / 100g',
+    highlight: false,
+  },
+];
+
+// ── 상태 ──────────────────────────────────────────────────────────────────────
+const state = {
+  concerns: new Set(),
+  age: null,
+  sensitivity: null,
+  activeFilter: 'all',
+};
+
+// ── Step 1: 고민 선택 ─────────────────────────────────────────────────────────
+function toggleConcern(el) {
+  const id = el.dataset.id;
+  if (state.concerns.has(id)) {
+    state.concerns.delete(id);
+    el.classList.remove('selected');
+  } else {
+    state.concerns.add(id);
+    el.classList.add('selected');
+  }
+  document.getElementById('btn-step1').disabled = state.concerns.size === 0;
+}
+
+// ── Step 2/3: 단일 선택 ───────────────────────────────────────────────────────
+function selectOption(type, el) {
+  const group = el.closest('.option-group');
+  group.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state[type] = el.dataset.val;
+
+  if (type === 'age')         document.getElementById('btn-step2').disabled = false;
+  if (type === 'sensitivity') document.getElementById('btn-step3').disabled = false;
+}
+
+// ── Step 이동 ─────────────────────────────────────────────────────────────────
+function goStep(step) {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`view-step${i}`).style.display = i === step ? '' : 'none';
+  }
+  updateStepUI(step);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (step === 4) buildResults();
+}
+
+function updateStepUI(step) {
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById(`step${i}`);
+    if (i < step)      { dot.className = 'step-dot done'; dot.textContent = '✓'; }
+    else if (i === step) { dot.className = 'step-dot active'; dot.textContent = i; }
+    else               { dot.className = 'step-dot'; dot.textContent = i; }
+    if (i <= 3) {
+      document.getElementById(`line${i}`).className =
+        'step-line' + (i < step ? ' done' : '');
+    }
+  }
+}
+
+// ── 결과 빌드 ─────────────────────────────────────────────────────────────────
+function buildResults() {
+  const concerns = [...state.concerns];
+  const age = state.age;
+  const sensitivity = state.sensitivity;
+
+  // 점수 계산
+  const scored = PRODUCTS.map(p => {
+    let score = 0;
+    let matchedTags = [];
+
+    // 고민 매칭
+    for (const c of concerns) {
+      if (p.tags.includes(c)) { score += 3; matchedTags.push(c); }
+    }
+
+    // 연령 매칭
+    if (p.age.includes(age)) score += 2;
+    else if (age === 'teen' && p.age.includes('adult')) score += 1;
+    else if (age === 'senior' && p.age.includes('adult')) score += 1;
+
+    // 민감도 매칭
+    if (p.sensitivity.includes(sensitivity)) score += 2;
+
+    return { ...p, score, matchedTags };
+  });
+
+  // 점수순 정렬, 상위 추려내기
+  const sorted = scored.filter(p => p.score > 0).sort((a, b) => b.score - a.score);
+  const top = sorted.slice(0, Math.min(8, sorted.length));
+  if (top.length > 0) top[0].best = true;
+
+  // 결과 타이틀
+  const labelMap = { whitening:'미백', sensitive:'시린이', cavity:'충치예방', gum:'잇몸케어', breath:'구취제거', tartar:'치석관리', kids:'어린이', natural:'천연·한방' };
+  const titleTags = concerns.map(c => labelMap[c]).join(' · ');
+  document.getElementById('result-title').textContent = titleTags + ' 맞춤 치약';
+  document.getElementById('result-desc').textContent = `${top.length}개의 치약을 추천해 드립니다. 슈퍼·마트에서 쉽게 구매하실 수 있어요.`;
+
+  // 필터 바
+  const filterBar = document.getElementById('filter-bar');
+  filterBar.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'filter-chip active';
+  allBtn.textContent = '전체';
+  allBtn.onclick = () => applyFilter('all', allBtn);
+  filterBar.appendChild(allBtn);
+  concerns.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-chip';
+    btn.textContent = labelMap[c];
+    btn.onclick = () => applyFilter(c, btn);
+    filterBar.appendChild(btn);
+  });
+
+  // 제품 저장
+  window._products = top;
+  renderProducts(top);
+}
+
+function applyFilter(tag, el) {
+  document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  state.activeFilter = tag;
+  const list = tag === 'all'
+    ? window._products
+    : window._products.filter(p => p.tags.includes(tag));
+  renderProducts(list);
+}
+
+function renderProducts(list) {
+  const grid = document.getElementById('product-grid');
+  grid.innerHTML = '';
+
+  if (list.length === 0) {
+    grid.innerHTML = '<div class="no-result">해당 조건의 치약이 없습니다.</div>';
+    return;
+  }
+
+  list.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'product-card' + (p.best || i === 0 ? ' best' : '');
+
+    const tagHTML = p.tagLabels.map((label, idx) => {
+      const isMatch = state.concerns.has(p.tags[idx]);
+      return `<span class="tag${isMatch ? ' highlight' : ''}">${label}</span>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="product-emoji">${p.emoji}</div>
+      <div class="product-brand">${p.brand}</div>
+      <div class="product-name">${p.name}</div>
+      <div class="product-desc">${p.desc}</div>
+      <div class="tag-list">${tagHTML}</div>
+      <div class="product-price">마트 판매가 <strong>${p.price}</strong></div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ── 다시 시작 ─────────────────────────────────────────────────────────────────
+function restart() {
+  state.concerns.clear();
+  state.age = null;
+  state.sensitivity = null;
+  state.activeFilter = 'all';
+
+  document.querySelectorAll('.concern-card').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.option-btn').forEach(el => el.classList.remove('selected'));
+  document.getElementById('btn-step1').disabled = true;
+  document.getElementById('btn-step2').disabled = true;
+  document.getElementById('btn-step3').disabled = true;
+
+  goStep(1);
+}
+</script>
+</body>
+</html>
