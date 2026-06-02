@@ -152,6 +152,33 @@ class KakaoRequest(BaseModel):
     bot: Optional[dict] = None
     action: Optional[dict] = None
 
+class QuestionnaireRequest(BaseModel):
+    name: Optional[str] = None
+    birth: Optional[str] = None
+    gender: Optional[str] = None
+    phone: Optional[str] = None
+    visit_reason: Optional[list[str] | str] = None
+    chief_complaint: Optional[str] = None
+    selected_teeth: Optional[str] = None
+    has_pain: Optional[str] = None
+    pain_level: Optional[str] = None
+    pain_onset: Optional[str] = None
+    pain_type: Optional[list[str] | str] = None
+    last_visit: Optional[str] = None
+    dental_anxiety: Optional[str] = None
+    systemic: Optional[list[str] | str] = None
+    has_medication: Optional[str] = None
+    medications: Optional[str] = None
+    has_allergy: Optional[str] = None
+    allergy_type: Optional[list[str] | str] = None
+    allergy_detail: Optional[str] = None
+    pregnancy: Optional[str] = None
+    brushing: Optional[str] = None
+    oral_care: Optional[list[str] | str] = None
+    smoking: Optional[str] = None
+    drinking: Optional[str] = None
+    privacy_agree: Optional[str] = None
+
 # ── 엔드포인트 ────────────────────────────────────────────────────────────────
 
 @app.post("/chat")
@@ -273,6 +300,21 @@ async def kakao_webhook(req: KakaoRequest):
 
 def _kakao_simple_text(text: str) -> dict:
     return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": text}}]}}
+
+
+@app.get("/questionnaire")
+async def questionnaire_page():
+    try:
+        with open("questionnaire.html", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>questionnaire.html을 찾을 수 없습니다.</h1>", status_code=404)
+
+
+@app.post("/questionnaire/submit")
+async def questionnaire_submit(req: QuestionnaireRequest):
+    """초진 설문지 제출 처리"""
+    return {"status": "ok", "message": "설문지가 제출되었습니다."}
 
 
 @app.get("/")
