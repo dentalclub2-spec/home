@@ -3,15 +3,17 @@
 - Claude API (claude-opus-4-7) 기반
 - FastAPI + 스트리밍 지원
 - 카카오톡 연동 구조 포함
+- X-ray 임플란트 판독 기능 포함
 """
 
+import base64
 import json
 import os
 from typing import Optional
 
 import anthropic
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
@@ -275,6 +277,120 @@ def _kakao_simple_text(text: str) -> dict:
     return {"version": "2.0", "template": {"outputs": [{"simpleText": {"text": text}}]}}
 
 
+# ── X-ray 판독 시스템 프롬프트 ──────────────────────────────────────────────
+
+XRAY_ANALYSIS_PROMPT = """당신은 치과 방사선 판독 전문 AI입니다.
+치근단 방사선 사진(periapical X-ray)을 분석하여 임플란트 종류와 상부구조 체결 상태를 판독합니다.
+
+## 판독 항목
+
+### 1. 임플란트 식별
+다음 특징을 기반으로 브랜드/시스템을 판별하세요:
+- **국내 브랜드**: 오스템(Osstem) US/SS/TS 시리즈, 덴티움(Dentium) SuperLine/NR Line, DIO UF/SM, 메가젠(MegaGen) AnyRidge/AnyOne, 네오바이오텍(NeoBiotech) IS/ISM
+- **해외 브랜드**: Straumann BL/BLT/TL, Nobel Biocare Replace/NobelActive, Zimmer Biomet TSV/SwissPlus, Dentsply Sirona Ankylos/ASTRA TECH
+- **판별 근거**: 임플란트 외형(나사산 피치/형태), 픽스처 상단 연결부 형태(내부육각/외부육각/원추형), 플랫폼 디자인
+
+### 2. 상부구조 체결 상태 판독
+임플란트-어버트먼트-보철물 연결부를 정밀 분석:
+- **완전 체결(Fully Engaged)**: 연결부에 방사선 투과성 간격 없음, 어버트먼트가 픽스처에 완전히 안착
+- **불완전 체결(Not Fully Engaged)**: 연결부에 미세한 방사선 투과성 틈(gap) 확인, 어버트먼트 유격
+- **체결 불가 판단(Cannot Assess)**: 화질 저하, 촬영 각도 문제, 중첩 구조물로 판단 불가
+
+반드시 아래 JSON 형식으로만 응답하세요 (설명 없이):
+{
+  "implant_identified": true또는false,
+  "implant": {
+    "brand": "브랜드명",
+    "system": "시스템/제품라인",
+    "connection_type": "연결방식 (내부육각|외부육각|원추형연결|기타)",
+    "platform_size": "플랫폼 사이즈 추정 (예: 3.5mm, 4.0mm, 4.5mm, 불명확)",
+    "identification_basis": ["판별 근거 1", "판별 근거 2"],
+    "confidence": 0.0부터1.0
+  },
+  "superstructure": {
+    "present": true또는false,
+    "type": "보철 종류 (단일 크라운|브릿지|임플란트 지지 보철|어버트먼트만|없음)",
+    "is_fully_engaged": true또는false또는null,
+    "engagement_status": "완전 체결|불완전 체결|체결 불가 판단|상부구조 없음",
+    "gap_detected": true또는false,
+    "gap_location": "간격 위치 설명 (gap 있을 때)",
+    "confidence": 0.0부터1.0
+  },
+  "radiographic_findings": ["방사선학적 소견 1", "소견 2", "소견 3"],
+  "bone_level": "골유착 및 골 수준 소견",
+  "clinical_urgency": "즉시 처치 필요|경과 관찰|정기 검진 권장",
+  "recommendations": ["임상 권고사항 1", "권고사항 2"],
+  "overall_assessment": "종합 판독 소견 2-3문장"
+}"""
+
+
+@app.post("/analyze-xray")
+async def analyze_xray(file: UploadFile = File(...)):
+    """치근단 X-ray 임플란트 판독 엔드포인트"""
+    allowed_types = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    content_type = file.content_type or ""
+    if content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"지원하지 않는 파일 형식입니다. JPEG, PNG, WebP만 지원합니다. (받은 형식: {content_type})"
+        )
+
+    image_data = await file.read()
+    if len(image_data) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="파일 크기는 20MB를 초과할 수 없습니다.")
+
+    b64_image = base64.standard_b64encode(image_data).decode("utf-8")
+    media_type = content_type if content_type in allowed_types else "image/jpeg"
+
+    resp = client.messages.create(
+        model="claude-opus-4-7",
+        max_tokens=2048,
+        system=[
+            {
+                "type": "text",
+                "text": XRAY_ANALYSIS_PROMPT,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ],
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": b64_image,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": "이 치근단 X-ray를 판독해주세요. 임플란트 종류와 상부구조 체결 상태를 분석하고 지정된 JSON 형식으로만 응답하세요.",
+                    },
+                ],
+            }
+        ],
+    )
+
+    raw_text = resp.content[0].text if resp.content else ""
+    try:
+        # JSON 블록 추출 (마크다운 코드 블록 처리)
+        text = raw_text.strip()
+        if text.startswith("```"):
+            text = text.split("```")[1]
+            if text.startswith("json"):
+                text = text[4:]
+        return json.loads(text.strip())
+    except (json.JSONDecodeError, IndexError):
+        return {
+            "implant_identified": False,
+            "error": "판독 결과 파싱 실패",
+            "raw_response": raw_text,
+            "overall_assessment": "이미지를 분석할 수 없습니다. 다른 이미지를 업로드해 주세요.",
+        }
+
+
 @app.get("/")
 async def root():
     try:
@@ -285,4 +401,4 @@ async def root():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)

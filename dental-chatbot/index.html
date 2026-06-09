@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>치과 상담 AI</title>
+  <title>치과 AI — 상담 & X-ray 판독</title>
   <style>
-    /* ── Reset & Base ─────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif;
@@ -25,20 +24,52 @@
       align-items: center;
       gap: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,.2);
+      flex-shrink: 0;
     }
     header .logo { font-size: 28px; }
-    header h1 { font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
-    header p  { font-size: 12px; opacity: .8; margin-top: 2px; }
+    header .header-text h1 { font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
+    header .header-text p  { font-size: 12px; opacity: .8; margin-top: 2px; }
 
-    /* ── Layout ──────────────────────────────────────────────────── */
-    .layout {
+    /* ── Tab Navigation ───────────────────────────────────────────── */
+    .tab-nav {
       display: flex;
+      background: #fff;
+      border-bottom: 2px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .tab-btn {
       flex: 1;
-      overflow: hidden;
-      gap: 0;
+      padding: 12px 16px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: #718096;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .tab-btn.active {
+      color: #2b6cb0;
+      border-bottom-color: #2b6cb0;
+    }
+    .tab-btn:hover:not(.active) {
+      color: #4a5568;
+      background: #f7fafc;
     }
 
-    /* ── Sidebar ─────────────────────────────────────────────────── */
+    /* ── Layout ──────────────────────────────────────────────────── */
+    .tab-content { display: none; flex: 1; overflow: hidden; }
+    .tab-content.active { display: flex; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       CHAT TAB
+    ═══════════════════════════════════════════════════════════════ */
     .sidebar {
       width: 280px;
       background: #fff;
@@ -57,8 +88,6 @@
       color: #718096;
       margin-bottom: 10px;
     }
-
-    /* 환자 유형 카드 */
     .patient-card {
       background: #ebf8ff;
       border: 1.5px solid #90cdf4;
@@ -76,28 +105,12 @@
       font-weight: 600;
       margin-bottom: 8px;
     }
-    .patient-card .confidence-bar {
-      height: 6px;
-      background: #bee3f8;
-      border-radius: 3px;
-      margin: 6px 0;
-    }
-    .patient-card .confidence-fill {
-      height: 100%;
-      background: #2b6cb0;
-      border-radius: 3px;
-      transition: width .4s ease;
-    }
+    .patient-card .confidence-bar { height: 6px; background: #bee3f8; border-radius: 3px; margin: 6px 0; }
+    .patient-card .confidence-fill { height: 100%; background: #2b6cb0; border-radius: 3px; transition: width .4s ease; }
     .patient-card .label { color: #4a5568; font-size: 12px; }
     .patient-card .value { font-weight: 600; color: #2d3748; }
     .tag-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
-    .tag {
-      background: #e2e8f0;
-      color: #4a5568;
-      border-radius: 20px;
-      padding: 2px 8px;
-      font-size: 11px;
-    }
+    .tag { background: #e2e8f0; color: #4a5568; border-radius: 20px; padding: 2px 8px; font-size: 11px; }
     .tip-box {
       background: #fffbeb;
       border-left: 3px solid #f6ad55;
@@ -107,8 +120,6 @@
       color: #744210;
       margin-top: 8px;
     }
-
-    /* 빠른 질문 버튼 */
     .quick-btn-list { display: flex; flex-direction: column; gap: 6px; }
     .quick-btn {
       background: #f7fafc;
@@ -121,13 +132,7 @@
       text-align: left;
       transition: all .15s;
     }
-    .quick-btn:hover {
-      background: #ebf8ff;
-      border-color: #90cdf4;
-      color: #2b6cb0;
-    }
-
-    /* 예약 유도 버튼 */
+    .quick-btn:hover { background: #ebf8ff; border-color: #90cdf4; color: #2b6cb0; }
     .appointment-btn {
       width: 100%;
       background: linear-gradient(135deg, #38a169, #276749);
@@ -139,17 +144,10 @@
       font-weight: 700;
       cursor: pointer;
       transition: opacity .15s;
-      letter-spacing: -.2px;
     }
     .appointment-btn:hover { opacity: .9; }
 
-    /* ── Chat Area ───────────────────────────────────────────────── */
-    .chat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+    .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .messages {
       flex: 1;
       overflow-y: auto;
@@ -158,115 +156,392 @@
       flex-direction: column;
       gap: 16px;
     }
-
-    /* 말풍선 */
-    .bubble-wrap {
-      display: flex;
-      gap: 10px;
-      max-width: 75%;
-    }
+    .bubble-wrap { display: flex; gap: 10px; max-width: 75%; }
     .bubble-wrap.user  { align-self: flex-end; flex-direction: row-reverse; }
     .bubble-wrap.assistant { align-self: flex-start; }
-
     .avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
     }
     .avatar.ai   { background: #ebf8ff; }
     .avatar.user { background: #e2e8f0; }
-
     .bubble {
-      padding: 12px 16px;
-      border-radius: 16px;
-      font-size: 14px;
-      line-height: 1.6;
-      white-space: pre-wrap;
+      padding: 12px 16px; border-radius: 16px; font-size: 14px;
+      line-height: 1.6; white-space: pre-wrap;
     }
     .bubble-wrap.assistant .bubble {
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-top-left-radius: 4px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      background: #fff; border: 1px solid #e2e8f0;
+      border-top-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
     }
-    .bubble-wrap.user .bubble {
-      background: #2b6cb0;
-      color: #fff;
-      border-top-right-radius: 4px;
-    }
-
-    /* 입력 영역 */
+    .bubble-wrap.user .bubble { background: #2b6cb0; color: #fff; border-top-right-radius: 4px; }
     .input-area {
-      background: #fff;
-      border-top: 1px solid #e2e8f0;
-      padding: 16px 20px;
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
+      background: #fff; border-top: 1px solid #e2e8f0;
+      padding: 16px 20px; display: flex; gap: 10px; align-items: flex-end;
     }
     .input-area textarea {
-      flex: 1;
-      border: 1.5px solid #cbd5e0;
-      border-radius: 12px;
-      padding: 10px 14px;
-      font-size: 14px;
-      resize: none;
-      min-height: 46px;
-      max-height: 120px;
-      line-height: 1.5;
-      transition: border-color .15s;
-      font-family: inherit;
+      flex: 1; border: 1.5px solid #cbd5e0; border-radius: 12px;
+      padding: 10px 14px; font-size: 14px; resize: none;
+      min-height: 46px; max-height: 120px; line-height: 1.5; transition: border-color .15s; font-family: inherit;
     }
-    .input-area textarea:focus {
-      outline: none;
-      border-color: #2b6cb0;
-    }
+    .input-area textarea:focus { outline: none; border-color: #2b6cb0; }
     .send-btn {
-      background: #2b6cb0;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      width: 46px;
-      height: 46px;
-      font-size: 20px;
-      cursor: pointer;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background .15s;
+      background: #2b6cb0; color: #fff; border: none; border-radius: 10px;
+      width: 46px; height: 46px; font-size: 20px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; transition: background .15s;
     }
     .send-btn:hover { background: #2c5282; }
     .send-btn:disabled { background: #a0aec0; cursor: not-allowed; }
-
-    /* 툴바 (요약 버튼) */
     .toolbar {
-      background: #f7fafc;
-      border-top: 1px solid #e2e8f0;
-      padding: 8px 20px;
-      display: flex;
-      gap: 8px;
+      background: #f7fafc; border-top: 1px solid #e2e8f0;
+      padding: 8px 20px; display: flex; gap: 8px;
     }
     .tool-btn {
+      background: #fff; border: 1.5px solid #e2e8f0; border-radius: 8px;
+      padding: 6px 14px; font-size: 12px; font-weight: 600; color: #4a5568;
+      cursor: pointer; transition: all .15s;
+    }
+    .tool-btn:hover { border-color: #90cdf4; color: #2b6cb0; }
+    .typing-indicator { display: flex; gap: 5px; align-items: center; padding: 12px 16px; }
+    .dot { width: 8px; height: 8px; background: #a0aec0; border-radius: 50%; animation: bounce .9s infinite; }
+    .dot:nth-child(2) { animation-delay: .15s; }
+    .dot:nth-child(3) { animation-delay: .3s; }
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+
+    /* ═══════════════════════════════════════════════════════════════
+       XRAY TAB
+    ═══════════════════════════════════════════════════════════════ */
+    .xray-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* 업로드 패널 */
+    .xray-upload-panel {
+      width: 380px;
+      min-width: 320px;
       background: #fff;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #4a5568;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      gap: 20px;
+      overflow-y: auto;
+    }
+    .xray-upload-panel h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2d3748;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .upload-zone {
+      border: 2px dashed #90cdf4;
+      border-radius: 16px;
+      background: #f0f9ff;
+      padding: 32px 20px;
+      text-align: center;
       cursor: pointer;
-      transition: all .15s;
+      transition: all .2s;
+      position: relative;
     }
-    .tool-btn:hover {
-      border-color: #90cdf4;
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #2b6cb0;
+      background: #ebf8ff;
+    }
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-icon { font-size: 48px; margin-bottom: 12px; }
+    .upload-zone p { font-size: 14px; color: #4a5568; margin-bottom: 6px; }
+    .upload-zone small { font-size: 12px; color: #a0aec0; }
+
+    /* 이미지 미리보기 */
+    .preview-box {
+      display: none;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1.5px solid #e2e8f0;
+      background: #000;
+      position: relative;
+    }
+    .preview-box.visible { display: block; }
+    .preview-box img {
+      width: 100%;
+      display: block;
+      max-height: 280px;
+      object-fit: contain;
+      background: #1a1a2e;
+    }
+    .preview-actions {
+      position: absolute;
+      top: 8px; right: 8px;
+      display: flex;
+      gap: 6px;
+    }
+    .preview-action-btn {
+      background: rgba(0,0,0,.6);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .analyze-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #2b6cb0, #2c5282);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .analyze-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .analyze-btn:not(:disabled):hover { opacity: .9; }
+
+    /* 분석 가이드 */
+    .xray-guide {
+      background: #fffbeb;
+      border: 1.5px solid #f6e05e;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 13px;
+      color: #744210;
+    }
+    .xray-guide strong { display: block; margin-bottom: 6px; }
+    .xray-guide ul { padding-left: 16px; line-height: 1.8; }
+
+    /* 결과 패널 */
+    .xray-result-panel {
+      flex: 1;
+      padding: 28px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* 결과 없음 상태 */
+    .result-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #a0aec0;
+      gap: 12px;
+    }
+    .result-empty .empty-icon { font-size: 64px; }
+    .result-empty p { font-size: 15px; }
+
+    /* 판독 결과 카드들 */
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .result-header h2 { font-size: 18px; font-weight: 700; color: #2d3748; }
+    .timestamp { font-size: 12px; color: #a0aec0; }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px) { .result-grid { grid-template-columns: 1fr; } }
+
+    .result-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .result-card.full-width { grid-column: 1 / -1; }
+    .result-card h3 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: #718096;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 체결 상태 뱃지 */
+    .engagement-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .engagement-badge.engaged    { background: #c6f6d5; color: #22543d; border: 1.5px solid #9ae6b4; }
+    .engagement-badge.not-engaged { background: #fed7d7; color: #742a2a; border: 1.5px solid #fc8181; }
+    .engagement-badge.unclear    { background: #fefcbf; color: #744210; border: 1.5px solid #f6e05e; }
+    .engagement-badge.no-struct  { background: #e2e8f0; color: #4a5568; border: 1.5px solid #cbd5e0; }
+
+    .engagement-indicator {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .engagement-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width .6s ease;
+    }
+
+    /* 임플란트 정보 */
+    .implant-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f4f8;
+      font-size: 14px;
+    }
+    .implant-info-row:last-child { border-bottom: none; }
+    .implant-info-row .info-label { color: #718096; font-size: 12px; }
+    .implant-info-row .info-value { font-weight: 600; color: #2d3748; }
+
+    /* 신뢰도 바 */
+    .confidence-section { margin-top: 12px; }
+    .conf-label { font-size: 12px; color: #718096; margin-bottom: 4px; }
+    .conf-bar { height: 6px; background: #e2e8f0; border-radius: 3px; }
+    .conf-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+    .conf-fill.high   { background: linear-gradient(90deg, #48bb78, #38a169); }
+    .conf-fill.medium { background: linear-gradient(90deg, #ed8936, #dd6b20); }
+    .conf-fill.low    { background: linear-gradient(90deg, #fc8181, #e53e3e); }
+
+    /* 소견 리스트 */
+    .findings-list {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .findings-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #4a5568;
+    }
+    .findings-list li::before {
+      content: "▸";
       color: #2b6cb0;
+      flex-shrink: 0;
+      margin-top: 1px;
     }
+
+    /* 권고사항 */
+    .recommendation-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #f7fafc;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #2d3748;
+      margin-bottom: 8px;
+    }
+    .rec-number {
+      background: #2b6cb0;
+      color: #fff;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* 긴급도 배지 */
+    .urgency-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .urgency-immediate { background: #fed7d7; color: #9b2c2c; }
+    .urgency-observe   { background: #fefcbf; color: #744210; }
+    .urgency-regular   { background: #c6f6d5; color: #276749; }
+
+    /* 종합 판독 */
+    .overall-text {
+      background: #f0f9ff;
+      border: 1.5px solid #bee3f8;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #2c5282;
+    }
+
+    /* 로딩 오버레이 */
+    .analyzing-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .analyzing-overlay.active { display: flex; }
+    .analyzing-box {
+      background: #fff;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+    }
+    .analyzing-box .scan-icon { font-size: 56px; margin-bottom: 16px; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.95)} }
+    .analyzing-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #2d3748; }
+    .analyzing-box p  { font-size: 13px; color: #718096; line-height: 1.6; }
+    .progress-bar { width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; margin-top: 20px; overflow: hidden; }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2b6cb0, #63b3ed);
+      border-radius: 3px;
+      animation: progress 3s ease-in-out infinite;
+    }
+    @keyframes progress { 0%{width:5%} 70%{width:85%} 100%{width:95%} }
 
     /* 모달 */
     .modal-overlay {
@@ -280,76 +555,30 @@
     }
     .modal-overlay.open { display: flex; }
     .modal {
-      background: #fff;
-      border-radius: 16px;
-      padding: 28px;
-      width: 480px;
-      max-width: 90vw;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      background: #fff; border-radius: 16px; padding: 28px;
+      width: 480px; max-width: 90vw; max-height: 80vh;
+      overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.2);
     }
     .modal h2 { font-size: 18px; margin-bottom: 16px; color: #2d3748; }
     .modal-close {
-      float: right;
-      background: none;
-      border: none;
-      font-size: 22px;
-      cursor: pointer;
-      color: #718096;
-      line-height: 1;
+      float: right; background: none; border: none;
+      font-size: 22px; cursor: pointer; color: #718096; line-height: 1;
     }
-    .summary-row {
-      margin-bottom: 14px;
-    }
+    .summary-row { margin-bottom: 14px; }
     .summary-row .s-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: #718096;
-      letter-spacing: .6px;
-      margin-bottom: 4px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      color: #718096; letter-spacing: .6px; margin-bottom: 4px;
     }
-    .summary-row .s-value {
-      font-size: 14px;
-      color: #2d3748;
-      line-height: 1.5;
-    }
-    .readiness-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .readiness-high   { background: #c6f6d5; color: #276749; }
-    .readiness-mid    { background: #fefcbf; color: #744210; }
-    .readiness-low    { background: #fed7d7; color: #9b2c2c; }
+    .summary-row .s-value { font-size: 14px; color: #2d3748; line-height: 1.5; }
+    .readiness-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+    .readiness-high { background: #c6f6d5; color: #276749; }
+    .readiness-mid  { background: #fefcbf; color: #744210; }
+    .readiness-low  { background: #fed7d7; color: #9b2c2c; }
 
-    /* 로딩 */
-    .typing-indicator {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-      padding: 12px 16px;
-    }
-    .dot {
-      width: 8px;
-      height: 8px;
-      background: #a0aec0;
-      border-radius: 50%;
-      animation: bounce .9s infinite;
-    }
-    .dot:nth-child(2) { animation-delay: .15s; }
-    .dot:nth-child(3) { animation-delay: .3s; }
-    @keyframes bounce {
-      0%, 80%, 100% { transform: translateY(0); }
-      40%           { transform: translateY(-6px); }
-    }
-
-    /* 반응형 */
     @media (max-width: 640px) {
       .sidebar { display: none; }
+      .xray-upload-panel { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; }
+      .xray-layout { flex-direction: column; }
     }
   </style>
 </head>
@@ -357,49 +586,42 @@
 
 <header>
   <span class="logo">🦷</span>
-  <div>
-    <h1>치과 상담 AI</h1>
-    <p>임플란트 · 충치 · 스케일링 · 잇몸 치료 전문 상담</p>
+  <div class="header-text">
+    <h1>치과 AI — 상담 & X-ray 판독</h1>
+    <p>임플란트 진단 · 상부구조 체결 분석 · 방사선 판독</p>
   </div>
 </header>
 
-<div class="layout">
-  <!-- 사이드바 -->
+<!-- 탭 네비게이션 -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('chat')" id="tab-chat">
+    💬 치과 상담 AI
+  </button>
+  <button class="tab-btn" onclick="switchTab('xray')" id="tab-xray">
+    🔬 X-ray 임플란트 판독
+  </button>
+</nav>
+
+<!-- ═══ TAB 1: 채팅 상담 ═══════════════════════════════════════════════════ -->
+<div class="tab-content active" id="content-chat">
   <aside class="sidebar">
-    <!-- 환자 유형 분석 -->
     <div class="sidebar-section">
       <h2>환자 유형 분석</h2>
       <div class="patient-card" id="patient-card">
         <div style="color:#a0aec0;font-size:13px;">대화를 시작하면 환자 유형이 분석됩니다.</div>
       </div>
     </div>
-
-    <!-- 빠른 질문 -->
     <div class="sidebar-section">
       <h2>빠른 질문</h2>
       <div class="quick-btn-list">
-        <button class="quick-btn" onclick="sendQuick('임플란트 비용이 얼마나 드나요?')">
-          🦷 임플란트 비용 문의
-        </button>
-        <button class="quick-btn" onclick="sendQuick('치아가 많이 아픈데 충치인가요?')">
-          😣 치통 / 충치 상담
-        </button>
-        <button class="quick-btn" onclick="sendQuick('스케일링은 얼마나 자주 해야 하나요?')">
-          ✨ 스케일링 주기 문의
-        </button>
-        <button class="quick-btn" onclick="sendQuick('치과 치료가 너무 무서운데 어떻게 하나요?')">
-          😰 치과 공포증 상담
-        </button>
-        <button class="quick-btn" onclick="sendQuick('앞니가 부러졌는데 어떻게 치료하나요?')">
-          💔 파절 / 손상 치아
-        </button>
-        <button class="quick-btn" onclick="sendQuick('잇몸에서 피가 자주 나는데 괜찮은가요?')">
-          🩸 잇몸 출혈 상담
-        </button>
+        <button class="quick-btn" onclick="sendQuick('임플란트 비용이 얼마나 드나요?')">🦷 임플란트 비용 문의</button>
+        <button class="quick-btn" onclick="sendQuick('치아가 많이 아픈데 충치인가요?')">😣 치통 / 충치 상담</button>
+        <button class="quick-btn" onclick="sendQuick('스케일링은 얼마나 자주 해야 하나요?')">✨ 스케일링 주기 문의</button>
+        <button class="quick-btn" onclick="sendQuick('치과 치료가 너무 무서운데 어떻게 하나요?')">😰 치과 공포증 상담</button>
+        <button class="quick-btn" onclick="sendQuick('앞니가 부러졌는데 어떻게 치료하나요?')">💔 파절 / 손상 치아</button>
+        <button class="quick-btn" onclick="sendQuick('잇몸에서 피가 자주 나는데 괜찮은가요?')">🩸 잇몸 출혈 상담</button>
       </div>
     </div>
-
-    <!-- 예약 유도 -->
     <div class="sidebar-section">
       <button class="appointment-btn" onclick="sendQuick('진료 예약을 하고 싶어요. 어떻게 하면 되나요?')">
         📅 진료 예약 안내받기
@@ -407,27 +629,21 @@
     </div>
   </aside>
 
-  <!-- 채팅 영역 -->
   <div class="chat-area">
     <div class="messages" id="messages">
-      <!-- 초기 인사 메시지 -->
       <div class="bubble-wrap assistant">
         <div class="avatar ai">🦷</div>
         <div class="bubble">
-          안녕하세요! 저는 치과 상담 AI입니다. 😊<br><br>
+          안녕하세요! 저는 치과 상담 AI입니다.<br><br>
           임플란트, 충치, 스케일링, 잇몸 치료 등 궁금하신 점을 편하게 말씀해 주세요.<br>
-          전문 상담을 통해 최선의 방향을 안내해 드리겠습니다.
+          X-ray 판독이 필요하시면 상단의 <strong>X-ray 임플란트 판독</strong> 탭을 이용해 주세요.
         </div>
       </div>
     </div>
-
-    <!-- 툴바 -->
     <div class="toolbar">
       <button class="tool-btn" onclick="openSummary()">📋 상담 요약 보기</button>
       <button class="tool-btn" onclick="resetChat()">🔄 새 상담 시작</button>
     </div>
-
-    <!-- 입력 영역 -->
     <div class="input-area">
       <textarea
         id="input"
@@ -436,14 +652,68 @@
         onkeydown="handleKey(event)"
         oninput="autoResize(this)"
       ></textarea>
-      <button class="send-btn" id="send-btn" onclick="sendMessage()" title="전송">
-        ➤
-      </button>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()" title="전송">➤</button>
     </div>
   </div>
 </div>
 
-<!-- 요약 모달 -->
+<!-- ═══ TAB 2: X-ray 판독 ═══════════════════════════════════════════════ -->
+<div class="tab-content" id="content-xray">
+  <div class="xray-layout">
+
+    <!-- 업로드 패널 -->
+    <div class="xray-upload-panel">
+      <h2>🔬 치근단 X-ray 업로드</h2>
+
+      <!-- 업로드 존 -->
+      <div class="upload-zone" id="upload-zone"
+           ondragover="handleDragOver(event)"
+           ondragleave="handleDragLeave(event)"
+           ondrop="handleDrop(event)">
+        <input type="file" id="xray-file-input" accept="image/*" onchange="handleFileSelect(event)" />
+        <div class="upload-icon">🩻</div>
+        <p><strong>클릭하거나 파일을 드래그해서 업로드</strong></p>
+        <small>JPEG · PNG · WebP 지원 · 최대 20MB</small>
+      </div>
+
+      <!-- 미리보기 -->
+      <div class="preview-box" id="preview-box">
+        <img id="preview-img" src="" alt="X-ray 미리보기" />
+        <div class="preview-actions">
+          <button class="preview-action-btn" onclick="clearImage()">✕ 제거</button>
+        </div>
+      </div>
+
+      <!-- 판독 버튼 -->
+      <button class="analyze-btn" id="analyze-btn" onclick="analyzeXray()" disabled>
+        🔬 임플란트 판독 시작
+      </button>
+
+      <!-- 가이드 -->
+      <div class="xray-guide">
+        <strong>📌 정확한 판독을 위한 촬영 팁</strong>
+        <ul>
+          <li>치근단 방사선 사진 권장</li>
+          <li>임플란트 전체가 포함되도록 촬영</li>
+          <li>어버트먼트 연결부가 선명하게 보이도록</li>
+          <li>평행 촬영법(Parallel technique) 사용 권장</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 결과 패널 -->
+    <div class="xray-result-panel" id="xray-result-panel">
+      <div class="result-empty" id="result-empty">
+        <div class="empty-icon">🩻</div>
+        <p>X-ray 이미지를 업로드하면<br>임플란트 종류와 상부구조 체결 상태를 자동으로 판독합니다.</p>
+      </div>
+      <div id="result-content" style="display:none;"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 상담 요약 모달 -->
 <div class="modal-overlay" id="summary-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('summary-modal')">✕</button>
@@ -452,12 +722,33 @@
   </div>
 </div>
 
+<!-- X-ray 분석 로딩 오버레이 -->
+<div class="analyzing-overlay" id="analyzing-overlay">
+  <div class="analyzing-box">
+    <div class="scan-icon">🔬</div>
+    <h3>AI 판독 중...</h3>
+    <p>치근단 X-ray를 분석하고 있습니다.<br>임플란트 종류와 상부구조 체결 상태를 판독 중입니다.</p>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+</div>
+
 <script>
-  // ── 상태 ──────────────────────────────────────────────────────────────────
-  let messages = [];   // {role, content}
+  // ══════════════════════════════════════════════
+  // 탭 전환
+  // ══════════════════════════════════════════════
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('content-' + tab).classList.add('active');
+  }
+
+  // ══════════════════════════════════════════════
+  // 채팅 기능
+  // ══════════════════════════════════════════════
+  let messages = [];
   let isLoading = false;
 
-  // ── 메시지 전송 ───────────────────────────────────────────────────────────
   async function sendMessage() {
     const input = document.getElementById('input');
     const text = input.value.trim();
@@ -465,7 +756,6 @@
 
     input.value = '';
     autoResize(input);
-
     addBubble('user', text);
     messages.push({ role: 'user', content: text });
 
@@ -478,23 +768,19 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages }),
       });
-
       if (!resp.ok) throw new Error('서버 오류');
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let fullText = '';
       let bubbleEl = null;
-
       typingEl.remove();
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-        for (const line of lines) {
+        for (const line of chunk.split('\n')) {
           if (!line.startsWith('data: ')) continue;
           const data = line.slice(6).trim();
           if (data === '[DONE]') break;
@@ -502,24 +788,15 @@
             const parsed = JSON.parse(data);
             if (parsed.text) {
               fullText += parsed.text;
-              if (!bubbleEl) {
-                bubbleEl = addBubble('assistant', fullText);
-              } else {
-                bubbleEl.textContent = fullText;
-              }
+              if (!bubbleEl) bubbleEl = addBubble('assistant', fullText);
+              else bubbleEl.textContent = fullText;
               scrollToBottom();
             }
           } catch {}
         }
       }
-
       if (fullText) messages.push({ role: 'assistant', content: fullText });
-
-      // 3번째 교환 이후마다 환자 유형 분석
-      if (messages.length >= 4 && messages.length % 4 === 0) {
-        analyzePatient();
-      }
-
+      if (messages.length >= 4 && messages.length % 4 === 0) analyzePatient();
     } catch (e) {
       typingEl?.remove();
       addBubble('assistant', '죄송합니다. 일시적인 오류가 발생했습니다. 다시 시도해 주세요.');
@@ -533,19 +810,15 @@
     sendMessage();
   }
 
-  // ── UI 헬퍼 ──────────────────────────────────────────────────────────────
   function addBubble(role, text) {
     const wrap = document.createElement('div');
     wrap.className = `bubble-wrap ${role}`;
-
     const avatar = document.createElement('div');
     avatar.className = `avatar ${role === 'assistant' ? 'ai' : 'user'}`;
     avatar.textContent = role === 'assistant' ? '🦷' : '👤';
-
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
     bubble.textContent = text;
-
     wrap.appendChild(avatar);
     wrap.appendChild(bubble);
     document.getElementById('messages').appendChild(wrap);
@@ -556,17 +829,14 @@
   function addTypingIndicator() {
     const wrap = document.createElement('div');
     wrap.className = 'bubble-wrap assistant';
-
     const avatar = document.createElement('div');
     avatar.className = 'avatar ai';
     avatar.textContent = '🦷';
-
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
     bubble.innerHTML = `<div class="typing-indicator">
       <div class="dot"></div><div class="dot"></div><div class="dot"></div>
     </div>`;
-
     wrap.appendChild(avatar);
     wrap.appendChild(bubble);
     document.getElementById('messages').appendChild(wrap);
@@ -585,10 +855,7 @@
   }
 
   function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   }
 
   function autoResize(el) {
@@ -596,7 +863,6 @@
     el.style.height = Math.min(el.scrollHeight, 120) + 'px';
   }
 
-  // ── 환자 유형 분석 ────────────────────────────────────────────────────────
   async function analyzePatient() {
     try {
       const resp = await fetch('/analyze', {
@@ -604,21 +870,16 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages }),
       });
-      const data = await resp.json();
-      renderPatientCard(data);
+      renderPatientCard(await resp.json());
     } catch {}
   }
 
   function renderPatientCard(data) {
     const card = document.getElementById('patient-card');
     const conf = Math.round((data.confidence || 0) * 100);
-    const readinessColor = {
-      '높음': '#38a169', '중간': '#dd6b20', '낮음': '#e53e3e'
-    }[data.appointment_readiness] || '#718096';
-
+    const readinessColor = {'높음':'#38a169','중간':'#dd6b20','낮음':'#e53e3e'}[data.appointment_readiness] || '#718096';
     const concerns = (data.concerns || []).map(c => `<span class="tag">${c}</span>`).join('');
     const treatments = (data.treatment_interest || []).map(t => `<span class="tag">${t}</span>`).join('');
-
     card.innerHTML = `
       <span class="type-badge">${data.type_label || data.primary_type || '분석 중'}</span>
       <div class="label">신뢰도</div>
@@ -633,95 +894,307 @@
     `;
   }
 
-  // ── 상담 요약 ─────────────────────────────────────────────────────────────
   async function openSummary() {
-    if (messages.length < 2) {
-      alert('상담 내용이 부족합니다. 더 많은 대화를 나눠주세요.');
-      return;
-    }
+    if (messages.length < 2) { alert('상담 내용이 부족합니다. 더 많은 대화를 나눠주세요.'); return; }
     document.getElementById('summary-modal').classList.add('open');
     document.getElementById('summary-content').innerHTML = '<p style="color:#a0aec0">요약 생성 중...</p>';
-
     try {
       const resp = await fetch('/summarize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages }),
       });
-      const data = await resp.json();
-      renderSummary(data);
+      renderSummary(await resp.json());
     } catch {
       document.getElementById('summary-content').innerHTML = '<p style="color:#e53e3e">요약 생성에 실패했습니다.</p>';
     }
   }
 
   function renderSummary(d) {
-    const readinessClass = {
-      '높음': 'readiness-high', '중간': 'readiness-mid', '낮음': 'readiness-low'
-    }[d.appointment_readiness] || 'readiness-mid';
-
+    const cls = {'높음':'readiness-high','중간':'readiness-mid','낮음':'readiness-low'}[d.appointment_readiness] || 'readiness-mid';
     const steps = (d.next_steps || []).map(s => `<li style="margin-bottom:4px">${s}</li>`).join('');
-    const treatments = (d.treatments_discussed || []).join(', ') || '-';
-
     document.getElementById('summary-content').innerHTML = `
-      <div class="summary-row">
-        <div class="s-label">주요 증상 / 불편</div>
-        <div class="s-value">${d.chief_complaint || '-'}</div>
-      </div>
-      <div class="summary-row">
-        <div class="s-label">논의된 치료</div>
-        <div class="s-value">${treatments}</div>
-      </div>
-      <div class="summary-row">
-        <div class="s-label">환자 유형</div>
-        <div class="s-value">${d.patient_type || '-'}</div>
-      </div>
-      <div class="summary-row">
-        <div class="s-label">예약 가능성</div>
-        <div class="s-value">
-          <span class="readiness-badge ${readinessClass}">${d.appointment_readiness || '-'}</span>
-        </div>
-      </div>
-      <div class="summary-row">
-        <div class="s-label">권장 다음 단계</div>
-        <div class="s-value"><ul style="padding-left:18px">${steps || '<li>정보 없음</li>'}</ul></div>
-      </div>
-      <div class="summary-row">
-        <div class="s-label">상담 요약</div>
-        <div class="s-value" style="background:#f7fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0">
-          ${d.summary_text || '-'}
-        </div>
+      <div class="summary-row"><div class="s-label">주요 증상 / 불편</div><div class="s-value">${d.chief_complaint || '-'}</div></div>
+      <div class="summary-row"><div class="s-label">논의된 치료</div><div class="s-value">${(d.treatments_discussed||[]).join(', ')||'-'}</div></div>
+      <div class="summary-row"><div class="s-label">환자 유형</div><div class="s-value">${d.patient_type||'-'}</div></div>
+      <div class="summary-row"><div class="s-label">예약 가능성</div><div class="s-value"><span class="readiness-badge ${cls}">${d.appointment_readiness||'-'}</span></div></div>
+      <div class="summary-row"><div class="s-label">권장 다음 단계</div><div class="s-value"><ul style="padding-left:18px">${steps||'<li>정보 없음</li>'}</ul></div></div>
+      <div class="summary-row"><div class="s-label">상담 요약</div>
+        <div class="s-value" style="background:#f7fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0">${d.summary_text||'-'}</div>
       </div>
     `;
   }
 
-  function closeModal(id) {
-    document.getElementById(id).classList.remove('open');
-  }
-
-  // 모달 외부 클릭 시 닫기
-  document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', e => {
-      if (e.target === overlay) overlay.classList.remove('open');
-    });
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
   });
 
-  // ── 초기화 ────────────────────────────────────────────────────────────────
   function resetChat() {
     if (!confirm('새 상담을 시작하시겠습니까? 현재 상담 내용이 사라집니다.')) return;
     messages = [];
-    const el = document.getElementById('messages');
-    el.innerHTML = `
+    document.getElementById('messages').innerHTML = `
       <div class="bubble-wrap assistant">
         <div class="avatar ai">🦷</div>
-        <div class="bubble">
-          안녕하세요! 저는 치과 상담 AI입니다. 😊<br><br>
-          임플란트, 충치, 스케일링, 잇몸 치료 등 궁금하신 점을 편하게 말씀해 주세요.
-        </div>
-      </div>
-    `;
+        <div class="bubble">안녕하세요! 저는 치과 상담 AI입니다.<br><br>
+          임플란트, 충치, 스케일링, 잇몸 치료 등 궁금하신 점을 편하게 말씀해 주세요.</div>
+      </div>`;
     document.getElementById('patient-card').innerHTML =
       '<div style="color:#a0aec0;font-size:13px;">대화를 시작하면 환자 유형이 분석됩니다.</div>';
+  }
+
+  // ══════════════════════════════════════════════
+  // X-ray 판독 기능
+  // ══════════════════════════════════════════════
+  let selectedFile = null;
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) loadPreview(file);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('upload-zone').classList.add('dragover');
+  }
+
+  function handleDragLeave(e) {
+    document.getElementById('upload-zone').classList.remove('dragover');
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('upload-zone').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) loadPreview(file);
+  }
+
+  function loadPreview(file) {
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('preview-img');
+      img.src = e.target.result;
+      document.getElementById('preview-box').classList.add('visible');
+      document.getElementById('analyze-btn').disabled = false;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearImage() {
+    selectedFile = null;
+    document.getElementById('preview-img').src = '';
+    document.getElementById('preview-box').classList.remove('visible');
+    document.getElementById('analyze-btn').disabled = true;
+    document.getElementById('xray-file-input').value = '';
+    document.getElementById('result-empty').style.display = 'flex';
+    document.getElementById('result-content').style.display = 'none';
+  }
+
+  async function analyzeXray() {
+    if (!selectedFile) return;
+
+    document.getElementById('analyzing-overlay').classList.add('active');
+    document.getElementById('analyze-btn').disabled = true;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const resp = await fetch('/analyze-xray', { method: 'POST', body: formData });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || '서버 오류가 발생했습니다.');
+      }
+
+      const data = await resp.json();
+      renderXrayResult(data);
+    } catch (e) {
+      renderXrayError(e.message);
+    } finally {
+      document.getElementById('analyzing-overlay').classList.remove('active');
+      document.getElementById('analyze-btn').disabled = false;
+    }
+  }
+
+  function renderXrayResult(d) {
+    document.getElementById('result-empty').style.display = 'none';
+    const content = document.getElementById('result-content');
+    content.style.display = 'block';
+
+    const implant = d.implant || {};
+    const supra   = d.superstructure || {};
+    const now     = new Date().toLocaleString('ko-KR');
+
+    // 체결 상태 배지
+    const engagementInfo = getEngagementInfo(supra.engagement_status, supra.is_fully_engaged);
+
+    // 임플란트 신뢰도 색상
+    const iConf = Math.round((implant.confidence || 0) * 100);
+    const sConf = Math.round((supra.confidence || 0) * 100);
+    const iConfClass = iConf >= 70 ? 'high' : iConf >= 40 ? 'medium' : 'low';
+    const sConfClass = sConf >= 70 ? 'high' : sConf >= 40 ? 'medium' : 'low';
+
+    // 긴급도
+    const urgencyInfo = getUrgencyInfo(d.clinical_urgency);
+
+    // 소견 리스트
+    const findings = (d.radiographic_findings || [])
+      .map(f => `<li>${escHtml(f)}</li>`).join('');
+
+    // 권고사항
+    const recs = (d.recommendations || [])
+      .map((r, i) => `
+        <div class="recommendation-item">
+          <div class="rec-number">${i + 1}</div>
+          <div>${escHtml(r)}</div>
+        </div>`).join('');
+
+    // 임플란트 식별 근거
+    const idBasis = (implant.identification_basis || [])
+      .map(b => `<li>${escHtml(b)}</li>`).join('');
+
+    content.innerHTML = `
+      <div class="result-header">
+        <h2>판독 결과</h2>
+        <span class="timestamp">${now}</span>
+      </div>
+
+      <div class="result-grid">
+
+        <!-- 상부구조 체결 상태 (메인) -->
+        <div class="result-card">
+          <h3>🔩 상부구조 체결 상태</h3>
+          <div class="engagement-badge ${engagementInfo.cls}">
+            ${engagementInfo.icon} ${escHtml(supra.engagement_status || '판독 불가')}
+          </div>
+          <div class="engagement-indicator">
+            <div class="engagement-fill" style="width:${sConf}%;background:${engagementInfo.barColor}"></div>
+          </div>
+          <div style="font-size:12px;color:#718096;margin-bottom:12px">판독 신뢰도 ${sConf}%</div>
+
+          <div class="implant-info-row">
+            <span class="info-label">보철 종류</span>
+            <span class="info-value">${escHtml(supra.type || '—')}</span>
+          </div>
+          <div class="implant-info-row">
+            <span class="info-label">Gap 관찰</span>
+            <span class="info-value" style="color:${supra.gap_detected ? '#e53e3e' : '#38a169'}">
+              ${supra.gap_detected ? '⚠ 간격 확인됨' : '✓ 간격 없음'}
+            </span>
+          </div>
+          ${supra.gap_location ? `
+          <div class="implant-info-row">
+            <span class="info-label">Gap 위치</span>
+            <span class="info-value" style="font-size:12px">${escHtml(supra.gap_location)}</span>
+          </div>` : ''}
+        </div>
+
+        <!-- 임플란트 식별 -->
+        <div class="result-card">
+          <h3>🦷 임플란트 식별</h3>
+          ${d.implant_identified ? `
+            <div class="implant-info-row">
+              <span class="info-label">브랜드</span>
+              <span class="info-value">${escHtml(implant.brand || '—')}</span>
+            </div>
+            <div class="implant-info-row">
+              <span class="info-label">시스템</span>
+              <span class="info-value">${escHtml(implant.system || '—')}</span>
+            </div>
+            <div class="implant-info-row">
+              <span class="info-label">연결 방식</span>
+              <span class="info-value">${escHtml(implant.connection_type || '—')}</span>
+            </div>
+            <div class="implant-info-row">
+              <span class="info-label">플랫폼 사이즈</span>
+              <span class="info-value">${escHtml(implant.platform_size || '—')}</span>
+            </div>
+            <div class="confidence-section">
+              <div class="conf-label">식별 신뢰도 ${iConf}%</div>
+              <div class="conf-bar"><div class="conf-fill ${iConfClass}" style="width:${iConf}%"></div></div>
+            </div>
+            ${idBasis ? `
+            <div style="margin-top:12px">
+              <div style="font-size:12px;color:#718096;margin-bottom:6px">식별 근거</div>
+              <ul class="findings-list">${idBasis}</ul>
+            </div>` : ''}
+          ` : `
+            <div style="color:#a0aec0;font-size:13px;padding:8px 0">임플란트를 확인할 수 없습니다.</div>
+          `}
+        </div>
+
+        <!-- 방사선학적 소견 -->
+        <div class="result-card">
+          <h3>📋 방사선학적 소견</h3>
+          <ul class="findings-list">${findings || '<li style="color:#a0aec0">소견 없음</li>'}</ul>
+          ${d.bone_level ? `
+          <div style="margin-top:14px;padding:10px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#2c5282">
+            <strong>골 수준:</strong> ${escHtml(d.bone_level)}
+          </div>` : ''}
+        </div>
+
+        <!-- 임상 긴급도 & 권고사항 -->
+        <div class="result-card">
+          <h3>🏥 임상 권고사항</h3>
+          <div style="margin-bottom:14px">
+            <span class="urgency-badge ${urgencyInfo.cls}">${urgencyInfo.icon} ${escHtml(d.clinical_urgency || '정기 검진 권장')}</span>
+          </div>
+          ${recs || '<div style="color:#a0aec0;font-size:13px">권고사항 없음</div>'}
+        </div>
+
+        <!-- 종합 판독 소견 -->
+        <div class="result-card full-width">
+          <h3>📝 종합 판독 소견</h3>
+          <div class="overall-text">${escHtml(d.overall_assessment || '판독 결과를 생성할 수 없습니다.')}</div>
+          <div style="margin-top:12px;padding:10px;background:#fffbeb;border-radius:8px;font-size:12px;color:#744210;border:1px solid #f6e05e">
+            ⚠ 본 판독 결과는 AI에 의해 생성된 참고용 정보입니다. 최종 임상 판단은 반드시 담당 치과의사의 직접 진단을 통해 이루어져야 합니다.
+          </div>
+        </div>
+
+      </div>
+    `;
+  }
+
+  function renderXrayError(msg) {
+    document.getElementById('result-empty').style.display = 'none';
+    const content = document.getElementById('result-content');
+    content.style.display = 'block';
+    content.innerHTML = `
+      <div style="background:#fff5f5;border:1.5px solid #fc8181;border-radius:16px;padding:24px;text-align:center;">
+        <div style="font-size:40px;margin-bottom:12px">⚠</div>
+        <h3 style="color:#c53030;margin-bottom:8px">판독 오류</h3>
+        <p style="color:#742a2a;font-size:14px">${escHtml(msg)}</p>
+        <p style="color:#a0aec0;font-size:12px;margin-top:8px">다른 이미지로 다시 시도해 주세요.</p>
+      </div>
+    `;
+  }
+
+  function getEngagementInfo(status, isEngaged) {
+    if (status === '완전 체결' || isEngaged === true) {
+      return { cls: 'engaged', icon: '✅', barColor: '#48bb78' };
+    } else if (status === '불완전 체결' || isEngaged === false) {
+      return { cls: 'not-engaged', icon: '⚠', barColor: '#fc8181' };
+    } else if (status === '상부구조 없음') {
+      return { cls: 'no-struct', icon: '—', barColor: '#a0aec0' };
+    }
+    return { cls: 'unclear', icon: '❓', barColor: '#f6e05e' };
+  }
+
+  function getUrgencyInfo(urgency) {
+    if (urgency === '즉시 처치 필요') return { cls: 'urgency-immediate', icon: '🚨' };
+    if (urgency === '경과 관찰')      return { cls: 'urgency-observe',   icon: '👁' };
+    return { cls: 'urgency-regular', icon: '✓' };
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 </script>
 </body>
