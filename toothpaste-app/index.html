@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#2b6cb0" />
+  <meta name="theme-color" content="#6b21a8" />
   <title>치약 선택 가이드</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --blue: #2b6cb0;
-      --blue-dark: #2c5282;
-      --blue-light: #ebf8ff;
+      --blue: #7e22ce;
+      --blue-dark: #6b21a8;
+      --blue-light: #f5f3ff;
       --green: #38a169;
       --green-dark: #276749;
-      --gray-100: #f0f4f8;
+      --gray-100: #f3f0ff;
       --gray-200: #e2e8f0;
       --gray-400: #a0aec0;
       --gray-500: #718096;
@@ -34,7 +34,7 @@
 
     /* ── Header ── */
     header {
-      background: linear-gradient(135deg, #2b6cb0, #1a365d);
+      background: linear-gradient(135deg, #7e22ce, #3b0764);
       color: #fff;
       padding: 16px 24px;
       padding-top: calc(16px + env(safe-area-inset-top));
@@ -116,7 +116,7 @@
     .concern-card:active { transform: scale(.97); }
     .concern-card.selected {
       border-color: var(--blue); background: var(--blue-light);
-      box-shadow: 0 0 0 3px rgba(43,108,176,.15);
+      box-shadow: 0 0 0 3px rgba(126,34,206,.15);
     }
     .concern-card .icon { font-size: 28px; margin-bottom: 6px; }
     .concern-card .label { font-size: 13px; font-weight: 700; color: var(--gray-700); line-height: 1.2; }
@@ -237,7 +237,7 @@
       border-radius: 20px; padding: 3px 9px;
       font-size: 11px; font-weight: 600;
     }
-    .tag.highlight { background: #bee3f8; color: var(--blue-dark); }
+    .tag.highlight { background: #e9d5ff; color: var(--blue-dark); }
     .product-price {
       margin-top: 12px; font-size: 12px; color: var(--gray-500);
       border-top: 1px solid var(--gray-100); padding-top: 10px;
@@ -257,11 +257,11 @@
     .restart-btn:active { background: var(--gray-200); }
 
     @media (hover: hover) {
-      .concern-card:hover { border-color: #90cdf4; background: var(--blue-light); transform: translateY(-2px); }
-      .option-btn:hover { border-color: #90cdf4; background: var(--blue-light); }
-      .filter-chip:hover { border-color: #90cdf4; color: var(--blue); }
+      .concern-card:hover { border-color: #c084fc; background: var(--blue-light); transform: translateY(-2px); }
+      .option-btn:hover { border-color: #c084fc; background: var(--blue-light); }
+      .filter-chip:hover { border-color: #c084fc; color: var(--blue); }
       .cta-btn:hover { opacity: .9; }
-      .product-card:hover { border-color: #90cdf4; box-shadow: 0 4px 20px rgba(43,108,176,.12); transform: translateY(-3px); }
+      .product-card:hover { border-color: #c084fc; box-shadow: 0 4px 20px rgba(126,34,206,.12); transform: translateY(-3px); }
       .restart-btn:hover { background: var(--gray-200); }
     }
 
