@@ -1,0 +1,455 @@
+<title>임플란트 수술 현황판</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* Layout: clinical ledger — filter bar, KPI strip, then sections stacked top-down from summary to detail */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#15232b; --muted:#5d6b73; --faint:#9aa6ad; --line:#dfe5e8; --wash:#eaf0f1;
+  --accent:#0d6e6a; --accent-wash:#d9eeec;
+  --bad:#c03a2b; --bad-wash:#fbe9e6; --good:#1d7a46; --good-wash:#e3f3e9; --warn:#a8650f; --warn-wash:#fbf0dc;
+  /* dataviz reference categorical, fixed order (validated light + dark) */
+  --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a; --c4:#eda100; --c5:#e87ba4; --c6:#008300; --c7:#6250d6; --c8:#e34948; --other:#9aa3a8;
+  --heat:42,120,214;
+  --f-body:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --f-num:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1719; --surface:#172225; --ink:#e4ecee; --muted:#9aaab0; --faint:#66767c; --line:#26353a; --wash:#1d2b2f;
+  --accent:#4fc1b8; --accent-wash:#163a38;
+  --bad:#ee7a6b; --bad-wash:#3a1f1c; --good:#5fca8a; --good-wash:#16301f; --warn:#e3a54e; --warn-wash:#36290f;
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181; --c6:#008300; --c7:#9085e9; --c8:#e66767; --other:#6c777c;
+  --heat:57,135,229; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1719; --surface:#172225; --ink:#e4ecee; --muted:#9aaab0; --faint:#66767c; --line:#26353a; --wash:#1d2b2f;
+  --accent:#4fc1b8; --accent-wash:#163a38;
+  --bad:#ee7a6b; --bad-wash:#3a1f1c; --good:#5fca8a; --good-wash:#16301f; --warn:#e3a54e; --warn-wash:#36290f;
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181; --c6:#008300; --c7:#9085e9; --c8:#e66767; --other:#6c777c;
+  --heat:57,135,229; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:14px}
+h1{font-size:24px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-wash);padding:4px 10px;border-radius:999px}
+.filters{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px}
+.filters label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+select{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.legend-note{margin-left:auto;font-size:12px;color:var(--faint)}
+section{display:flex;flex-direction:column;gap:14px}
+h2{font-size:15px;margin:0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h2 small{font-size:12px;font-weight:400;color:var(--muted)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+.grid{display:grid;gap:14px}
+.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g21{grid-template-columns:2fr 1fr}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;min-width:0}
+.panel h3{font-size:13px;margin:0 0 10px;font-weight:600}
+.panel .note{font-size:11.5px;color:var(--faint);margin-top:8px}
+.kpi{display:flex;flex-direction:column;gap:2px}
+.kpi .lab{font-size:12px;color:var(--muted);font-weight:500}
+.kpi .val{font-family:var(--f-num);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .val small{font-size:13px;color:var(--muted);font-family:var(--f-body);font-weight:400;margin-left:3px}
+.kpi .foot{font-size:12px;color:var(--muted)}
+.chip{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:999px;font-family:var(--f-num)}
+.up{color:var(--good);background:var(--good-wash)} .down{color:var(--bad);background:var(--bad-wash)} .flat{color:var(--muted);background:var(--wash)}
+.insights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 24px;margin:0;padding:0;list-style:none}
+.insights li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px}
+.insights .tag{flex:none;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:2px}
+.t-new{background:var(--accent-wash);color:var(--accent)} .t-warn{background:var(--warn-wash);color:var(--warn)} .t-bad{background:var(--bad-wash);color:var(--bad)} .t-good{background:var(--good-wash);color:var(--good)}
+.insights b{font-family:var(--f-num);font-weight:600}
+.chart{position:relative;height:260px}
+.chart.tall{height:300px} .chart.short{height:210px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11.5px;color:var(--muted);font-weight:600;background:var(--wash);position:sticky;top:0}
+th:first-child,td:first-child{text-align:left}
+tbody tr:hover td{background:var(--wash)}
+tfoot td{font-weight:700;border-top:2px solid var(--ink);border-bottom:none}
+td.z{color:var(--faint)}
+td.num{font-family:var(--f-num)}
+.bar-row{display:grid;grid-template-columns:72px 1fr 44px;gap:8px;align-items:center;font-size:12.5px}
+.bar-row .track{height:8px;background:var(--wash);border-radius:4px;overflow:hidden}
+.bar-row .fill{height:100%;border-radius:4px}
+.bar-row .v{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.stack{display:flex;flex-direction:column;gap:8px}
+.mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.mini div{background:var(--wash);border-radius:6px;padding:10px;text-align:center}
+.mini .n{font-family:var(--f-num);font-size:22px;font-weight:600}
+.mini .l{font-size:11px;color:var(--muted)}
+.heat td{min-width:46px;text-align:center;font-family:var(--f-num)}
+.heat th{text-align:center}
+.pill{font-size:11px;padding:1px 6px;border-radius:4px;background:var(--wash);color:var(--muted)}
+.foot-note{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;line-height:1.7}
+@media (max-width:1000px){.g5{grid-template-columns:repeat(3,minmax(0,1fr))}.g3,.g21{grid-template-columns:1fr}}
+@media (max-width:700px){.g5{grid-template-columns:repeat(2,minmax(0,1fr))}.g2,.insights{grid-template-columns:1fr}.legend-note{margin-left:0}.kpi .val{font-size:24px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <div class="eyebrow">수술장부 분석 · Implant Surgery Log</div>
+    <h1>임플란트 수술 현황판</h1>
+    <div class="sub" id="periodSub">신규 식립·제거·재식립·수술 운영 지표</div>
+  </div>
+  <span class="badge" id="updBadge">최근 반영 월</span>
+</header>
+
+<div class="filters">
+  <label for="yearFilter">기간
+    <select id="yearFilter"></select>
+  </label>
+  <label for="coFilter">업체
+    <select id="coFilter"><option value="all">전체 업체</option></select>
+  </label>
+  <span class="legend-note">단위: 픽스처 개수 (수량 기준)</span>
+</div>
+
+<section>
+  <div class="grid g5" id="kpis"></div>
+</section>
+
+<section>
+  <h2>최근 월 요약 <small id="insSub">자동 생성</small></h2>
+  <div class="panel"><ul class="insights" id="insights"></ul></div>
+</section>
+
+<section>
+  <h2>월별 추이</h2>
+  <div class="grid g21">
+    <div class="panel"><h3>신규 식립 · 제거 · 재식립</h3><div class="chart tall"><canvas id="trendChart"></canvas></div></div>
+    <div class="panel"><h3>업체별 신규 식립</h3><div class="chart tall"><canvas id="barChart"></canvas></div></div>
+  </div>
+  <div class="panel"><h3>월별 업체 점유율 (신규 식립)</h3><div class="chart"><canvas id="shareChart"></canvas></div>
+    <div class="note">막대 하나가 한 달의 신규 식립 100%입니다.</div></div>
+</section>
+
+<section>
+  <h2>Osstem 라인 구성 <small>2026년부터 · TS3 / TS4 / TS5</small></h2>
+  <div class="grid g21">
+    <div class="panel"><h3>월별 Osstem 라인별 신규 식립</h3><div class="chart"><canvas id="lineChart"></canvas></div>
+      <div class="note">1~3월 장부에는 대부분 라인 구분 없이 "Osstem"으로만 기록되어 "미기재"로 표시합니다. 8·9월 시스템의 TS3BA는 TS3로 묶었습니다.</div></div>
+    <div class="panel"><h3>픽스처 타입 분포</h3><div class="chart"><canvas id="typeChart"></canvas></div><div class="note" id="typeNote"></div></div>
+  </div>
+</section>
+
+<section>
+  <h2>수술 운영 지표 <small>2026년부터 · 환자·날짜 단위 수술 건 기준</small></h2>
+  <div class="grid g2">
+    <div class="panel"><h3>해피콜 · 시뮬레이션 · 가이드 시행률</h3><div class="chart"><canvas id="opsRateChart"></canvas></div>
+      <div class="note">수술 건 중 시행 기록이 있는 비율. "x"·빈칸·N은 미시행으로 보고, 해피콜 "제외" 건은 분모에서 뺍니다.</div></div>
+    <div class="panel"><h3>외과 시술 동반 (골이식 · 발치 즉시 · 상악동)</h3><div class="chart"><canvas id="surgChart"></canvas></div>
+      <div class="note">장부 행 수 기준 건수입니다.</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="panel scroll"><h3>월별 운영 요약</h3><table id="opsTable"></table></div>
+    <div class="panel"><h3>Main assistant 참여 수술 건</h3><div class="stack" id="staffBars"></div>
+      <div class="note">수술 건의 첫 행에 기록된 Main assistant 기준. 선택한 기간에 맞춰 집계됩니다.</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>제거 · 재식립</h2>
+  <div class="grid g3">
+    <div class="panel" id="removalCard"></div>
+    <div class="panel"><h3>월별 제거 · 재식립</h3><div class="chart short"><canvas id="removalChart"></canvas></div></div>
+    <div class="panel"><h3 id="reiTitle">재식립 시 업체 선택</h3><div class="chart short"><canvas id="reimplantCoChart"></canvas></div><div class="note" id="reiNote"></div></div>
+  </div>
+  <div class="panel"><h3>제거 원인 <small style="font-weight:400;color:var(--muted)">최근 6개월</small></h3><div class="grid g2" id="reasonBox"></div>
+    <div class="note">수술관리 시스템(2026년 8월~)의 제거 원인. "제거"와 "제거&amp;재식립" 행을 모두 셉니다.</div></div>
+</section>
+
+<section>
+  <h2>사이즈 분포 <small>신규 식립 · 직경 × 길이 (mm)</small></h2>
+  <div class="grid g2">
+    <div class="panel"><h3>직경별</h3><div class="chart short"><canvas id="diaChart"></canvas></div></div>
+    <div class="panel"><h3>길이별</h3><div class="chart short"><canvas id="lenChart"></canvas></div></div>
+  </div>
+  <div class="panel"><h3>직경 × 길이 조합</h3><div class="scroll" id="sizeHeatmap"></div></div>
+</section>
+
+<section>
+  <h2>덴티움(Den) 사용 기록 <small>"25.26 덴티움" 시트</small></h2>
+  <div class="grid g21">
+    <div class="panel scroll"><h3>케이스 목록</h3><table id="denTable"></table></div>
+    <div class="panel"><h3>요약</h3><div id="denSummary"></div></div>
+  </div>
+</section>
+
+<section>
+  <h2>월별 상세표 <small>신규 식립 업체별 · 제거 · 재식립</small></h2>
+  <div class="panel scroll"><table id="detailTable"></table></div>
+</section>
+
+<div class="foot-note">
+  2024.01 ~ 2026.07은 엑셀 수술장부, 2026.08부터는 수술관리 시스템 내보내기(View 시트)를 같은 기준으로 변환해 집계합니다. 시스템 실적요약의 수술건수·Fixture와 일치하는지 매달 확인합니다.
+  신규 식립은 구분 "일반·보험"의 신규 행 수량 합계이며, "Free"(장부의 free)는 신규·재식립 집계에서 뺍니다. 제거는 "제거" 행, 재식립은 "재식립" + "제거&amp;재식립" 행을 셉니다. 2026년 이전 제거 건수는 기존 대시보드 값입니다.
+  Osstem TS3(BA)·TS4·TS5는 Osstem으로, Neo s-mini·ALX는 Neo로, 유한양행은 유한_EVER로, 신흥 evertis는 신흥_EVER로 묶었습니다. 픽스처 타입과 제거·재식립 업체 차트는 2026년 이후만 월별로 정확히 집계되며, 그 외 기간은 기존 대시보드의 누적값입니다.
+</div>
+</div>
+
+<script>
+const RAW = __DATA__;
+const YEARS = {'2024':'2024','2025':'2025','2026':'2026'};
+const charts = {};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const CO_VAR = {'Osstem':'--c1','Neo':'--c2','유한_EVER':'--c3','신흥':'--c4','신흥_EVER':'--c5','Den':'--c6','에버티스':'--c7'};
+const MAJOR = Object.keys(CO_VAR); // anything else folds into 기타 (never a generated hue)
+const coColor = c => css(CO_VAR[c]||'--other');
+const alpha = (hex,a) => { const h=hex.replace('#',''); const n=parseInt(h,16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; };
+const fmtM = m => m.slice(2,4)+'.'+m.slice(5);
+const sum = a => a.reduce((s,v)=>s+v,0);
+const pct = (a,b) => b ? (a/b*100) : 0;
+
+function months(){
+  const y = document.getElementById('yearFilter').value;
+  if(y==='all') return RAW.months;
+  if(y==='last12') return RAW.months.slice(-12);
+  return RAW.months.filter(m=>m.startsWith(y));
+}
+function cos(){
+  const c = document.getElementById('coFilter').value;
+  return c==='all' ? RAW.companies : [c];
+}
+const mval = (m,c) => RAW.monthly_co[m+'|||'+c]||0;
+const newOf = (m,cs) => cs.length===RAW.companies.length ? (RAW.siknew_monthly[m]||0) : sum(cs.map(c=>mval(m,c)));
+
+function baseOpts(extra={}){
+  const ink=css('--muted'), grid=css('--line');
+  Chart.defaults.elements.line.borderWidth=2; Chart.defaults.elements.line.borderCapStyle='round'; Chart.defaults.elements.line.borderJoinStyle='round';
+  Chart.defaults.elements.point.radius=0; Chart.defaults.elements.point.hoverRadius=5; Chart.defaults.elements.point.hitRadius=10;
+  Chart.defaults.elements.point.borderWidth=2; Chart.defaults.elements.point.hoverBorderWidth=2; Chart.defaults.elements.point.borderColor=css('--surface');
+  Chart.defaults.elements.bar.borderRadius=4; Chart.defaults.elements.bar.borderSkipped='start';
+  Chart.defaults.datasets.bar.maxBarThickness=24;
+  return Object.assign({responsive:true,maintainAspectRatio:false,animation:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'bottom',labels:{color:ink,boxWidth:10,boxHeight:10,font:{size:11,family:css('--f-body')}}},
+      tooltip:{titleFont:{family:css('--f-body')},bodyFont:{family:css('--f-body')}}},
+    scales:{x:{grid:{display:false},ticks:{color:ink,font:{size:10.5}}},y:{beginAtZero:true,grid:{color:grid},border:{display:false},ticks:{color:ink,font:{size:10.5}}}}},extra);
+}
+function draw(id,cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart(document.getElementById(id),cfg); }
+
+function renderKPIs(ms,cs){
+  const tn=sum(ms.map(m=>newOf(m,cs))), tr=sum(ms.map(m=>RAW.jegeo_monthly[m]||0)), ti=sum(ms.map(m=>RAW.reimg_monthly[m]||0));
+  const last=ms[ms.length-1], prevYear=(+last.slice(0,4)-1)+last.slice(4);
+  const lv=newOf(last,cs), pv=RAW.months.includes(prevYear)?newOf(prevYear,cs):null;
+  // same-period YoY
+  const prevMs=ms.map(m=>(+m.slice(0,4)-1)+m.slice(4)).filter(m=>RAW.months.includes(m));
+  const yoy = prevMs.length===ms.length ? pct(tn-sum(prevMs.map(m=>newOf(m,cs))), sum(prevMs.map(m=>newOf(m,cs)))) : null;
+  const chip = v => v===null ? '<span class="chip flat">비교 없음</span>' : `<span class="chip ${v>0.5?'up':v<-0.5?'down':'flat'}">${v>0?'+':''}${v.toFixed(1)}%</span>`;
+  const k=(lab,val,unit,foot,color)=>`<div class="panel kpi"><span class="lab">${lab}</span><span class="val" style="color:${color}">${val}<small>${unit}</small></span><span class="foot">${foot}</span></div>`;
+  document.getElementById('kpis').innerHTML =
+    k('신규 식립',tn.toLocaleString(),'개',`전년 동기 대비 ${chip(yoy)}`,css('--ink'))+
+    k('월 평균 신규',(tn/ms.length).toFixed(1),'개/월',`${ms.length}개월 · ${fmtM(ms[0])} ~ ${fmtM(last)}`,css('--ink'))+
+    k(`최근 월 (${fmtM(last)})`,lv,'개',`전년 같은 달 ${pv??'-'}개 ${pv?chip(pct(lv-pv,pv)):''}`,css('--ink'))+
+    k('제거',tr,'개',`신규 대비 ${pct(tr,tn).toFixed(1)}%`,css('--ink'))+
+    k('재식립',ti,'개',`제거 대비 ${pct(ti,tr).toFixed(0)}%`,css('--ink'));
+}
+
+function renderInsights(){
+  const sk=RAW.siknew_monthly, O=RAW.ops, M=RAW.months, L=M[M.length-1], P=M[M.length-2];
+  const Y=(+L.slice(0,4)-1)+L.slice(4), lab=m=>`${+m.slice(5)}월`;
+  const chg=(a,b)=>b?`${a>=b?'+':''}${pct(a-b,b).toFixed(0)}%`:'-';
+  const share=(m,c)=>pct(mval(m,c),sk[m]).toFixed(0);
+  const ytd=y=>sum(M.filter(m=>m.startsWith(y)&&m.slice(5)<=L.slice(5)).map(m=>sk[m]||0));
+  const yNow=L.slice(0,4), yPrev=String(+yNow-1), a=ytd(yNow), b=ytd(yPrev);
+  const items=[];
+  items.push(['t-new','최근 월',`${L.slice(0,4)}년 ${lab(L)} 신규 <b>${sk[L]}</b>개. 전월(${sk[P]}개) 대비 ${chg(sk[L],sk[P])}, 전년 같은 달(${sk[Y]??'-'}개) 대비 <b>${chg(sk[L],sk[Y])}</b>.`]);
+  if(b) items.push([a>=b?'t-good':'t-warn','연 누계',`${yNow}년 1~${+L.slice(5)}월 누계 <b>${a.toLocaleString()}</b>개, 전년 동기 ${b.toLocaleString()}개 대비 <b>${pct(a-b,b).toFixed(1)}%</b>.`]);
+  const o=O[L];
+  if(o){
+    const end=new Date(+L.slice(0,4),+L.slice(5),0).getDate();
+    if(o.closed===false || (o.last_day && o.last_day<end-3)) items.push(['t-warn','입력 확인',`${lab(L)} 기록이 ${o.last_day||'?'}일까지 있고 ${o.closed===false?'시스템상 "미마감"입니다':'월말 기록이 비어 있습니다'}. 마감 후 다시 내보내면 이 달 수치가 바뀔 수 있습니다.`]);
+    const others=RAW.companies.filter(c=>c!=='Osstem'&&mval(L,c)).sort((x,y)=>mval(L,y)-mval(L,x)).slice(0,2);
+    items.push(['t-new','업체',`Osstem 점유율 ${lab(P)} ${share(P,'Osstem')}% → ${lab(L)} <b>${share(L,'Osstem')}%</b>. ${others.length?'그 외 '+others.map(c=>`${c} ${mval(L,c)}개`).join(', ')+'.':''}`]);
+    const ol=RAW.osstem_line, t3=ol[L+'|||TS3']||0, t4=ol[L+'|||TS4']||0, t5=ol[L+'|||TS5']||0;
+    if(t3+t4+t5) items.push(['t-new','Osstem 라인',`${lab(L)} TS3 <b>${t3}</b> · TS4 ${t4}${t5?` · TS5 ${t5}`:''}개.`]);
+    const br=m=>O[m]?pct(O[m].bone_s+O[m].bone_c,O[m].rows):null, prev3=M.slice(-4,-1).map(br).filter(x=>x!==null);
+    const avg=prev3.length?sum(prev3)/prev3.length:null;
+    items.push([avg!==null&&br(L)>avg+5?'t-warn':'t-new','외과 비중',`골이식 동반 비율 <b>${br(L).toFixed(0)}%</b>${avg!==null?` (직전 3개월 평균 ${avg.toFixed(0)}%)`:''}, 복잡 GBR ${o.bone_c}건, 발치 즉시 ${o.ext}건, 상악동 ${o.sinus}건.`]);
+    const rs=Object.entries(o.reasons||{}).sort((x,y)=>y[1]-x[1]);
+    const jr=RAW.jegeo_monthly[L]||0, jp=RAW.jegeo_monthly[P]||0;
+    items.push([jr>jp?'t-bad':'t-good','제거',`${lab(L)} 제거 <b>${jr}</b>건(전월 ${jp}건)${rs.length?`, 원인은 ${rs.map(([k,v])=>`${k} ${v}`).join(' · ')}`:''}.`]);
+    const r=(m,k)=>O[m]?pct(O[m][k],O[m].cases-(k==='hc'?(O[m].hc_excl||0):0)):0;
+    items.push([r(L,'sim')>=r(P,'sim')?'t-good':'t-warn','운영',`시뮬레이션 ${r(P,'sim').toFixed(0)}% → <b>${r(L,'sim').toFixed(0)}%</b>, 해피콜 ${r(P,'hc').toFixed(0)}% → <b>${r(L,'hc').toFixed(0)}%</b>, 가이드 ${r(L,'guide').toFixed(0)}%. 수술 ${o.cases}건.`]);
+  }
+  document.getElementById('insSub').textContent=`${L.slice(0,4)}년 ${lab(L)} 기준 · 데이터에서 자동 생성`;
+  document.getElementById('insights').innerHTML=items.map(([c,t,x])=>`<li><span class="tag ${c}">${t}</span><span>${x}</span></li>`).join('');
+}
+function renderTrend(ms,cs){
+  const L=ms.map(fmtM);
+  const endDot=(n,c)=>({pointRadius:Array.from({length:n},(_,i)=>i===n-1?4:0),pointBackgroundColor:c});
+  draw('trendChart',{type:'line',data:{labels:L,datasets:[
+    {label:'신규 식립',data:ms.map(m=>newOf(m,cs)),borderColor:css('--c1'),backgroundColor:alpha(css('--c1'),.10),fill:'origin',tension:.3,...endDot(ms.length,css('--c1'))},
+    {label:'제거',data:ms.map(m=>RAW.jegeo_monthly[m]||0),borderColor:css('--c2'),tension:.3,...endDot(ms.length,css('--c2'))},
+    {label:'재식립',data:ms.map(m=>RAW.reimg_monthly[m]||0),borderColor:css('--c3'),tension:.3,...endDot(ms.length,css('--c3'))}]},options:baseOpts()});
+}
+function renderBar(ms,cs){
+  const rows=cs.map(c=>[c,sum(ms.map(m=>mval(m,c)))]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  draw('barChart',{type:'bar',data:{labels:rows.map(r=>r[0]),datasets:[{label:'신규',data:rows.map(r=>r[1]),backgroundColor:rows.map(r=>coColor(r[0]))}]},
+    options:baseOpts({indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:css('--line')},ticks:{color:css('--muted')}},y:{grid:{display:false},ticks:{color:css('--ink'),font:{size:11.5}}}}})});
+}
+function renderShare(ms,cs){
+  const grp=c=>MAJOR.includes(c)?c:'기타';
+  const keys=[...new Set(cs.filter(c=>ms.some(m=>mval(m,c))).map(grp))].sort((a,b)=>(MAJOR.indexOf(a)+99*(a==='기타'))-(MAJOR.indexOf(b)+99*(b==='기타')));
+  const val=(m,k)=>sum(cs.filter(c=>grp(c)===k).map(c=>mval(m,c)));
+  draw('shareChart',{type:'bar',data:{labels:ms.map(fmtM),datasets:keys.map(k=>({label:k,data:ms.map(m=>{const t=sum(keys.map(x=>val(m,x)));return t?+(val(m,k)/t*100).toFixed(1):0}),
+      backgroundColor:k==='기타'?css('--other'):coColor(k),borderColor:css('--surface'),borderWidth:{top:2,bottom:0,left:0,right:0},borderSkipped:false,borderRadius:0}))},
+    options:baseOpts({scales:{x:{stacked:true,grid:{display:false},ticks:{color:css('--muted'),font:{size:10.5}}},y:{stacked:true,max:100,grid:{color:css('--line')},border:{display:false},ticks:{color:css('--muted'),callback:v=>v+'%'}}},
+      plugins:{legend:{position:'bottom',labels:{color:css('--muted'),boxWidth:10,font:{size:11}}},tooltip:{callbacks:{label:x=>`${x.dataset.label}: ${x.raw}%`}}}})});
+}
+function renderOsstemLine(){
+  const ms=RAW.months.filter(m=>m>='2026'), lines=[['TS3','--c1'],['TS4','--c2'],['TS5','--c3'],['미기재','--other']];
+  draw('lineChart',{type:'bar',data:{labels:ms.map(fmtM),datasets:lines.map(([l,v])=>({label:l,data:ms.map(m=>RAW.osstem_line[m+'|||'+l]||0),backgroundColor:css(v),borderColor:css('--surface'),borderWidth:{top:2,bottom:0,left:0,right:0},borderSkipped:false,borderRadius:0}))},
+    options:baseOpts({scales:{x:{stacked:true,grid:{display:false},ticks:{color:css('--muted')}},y:{stacked:true,grid:{color:css('--line')},border:{display:false},ticks:{color:css('--muted')}}}})});
+}
+function only2026(ms){ return ms.every(m=>m>='2026'); }
+function renderType(ms,cs){
+  const t={};
+  if(only2026(ms)){
+    Object.entries(RAW.type_m).forEach(([k,v])=>{const [m,c,ty]=k.split('|||'); if(ms.includes(m)&&cs.includes(c)) t[ty]=(t[ty]||0)+v;});
+    document.getElementById('typeNote').textContent='선택한 2026년 기간 기준.';
+  } else {
+    cs.forEach(c=>Object.entries(RAW.co_type_old[c]||{}).forEach(([ty,v])=>{ty=ty.toUpperCase(); if(['W','SW','RG','M'].includes(ty)) t[ty]=(t[ty]||0)+v;}));
+    document.getElementById('typeNote').textContent='기존 대시보드 누적값(2024.01~2026.06 초). 기간 필터는 2026년 선택 시에만 적용됩니다.';
+  }
+  const TV={RG:'--c1',W:'--c2',SW:'--c3',M:'--c4'}, order=['RG','W','SW','M'].filter(x=>t[x]);
+  draw('typeChart',{type:'doughnut',data:{labels:order,datasets:[{data:order.map(x=>t[x]),backgroundColor:order.map(x=>css(TV[x])),borderColor:css('--surface'),borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:css('--muted'),boxWidth:10,font:{size:11}}},
+      tooltip:{callbacks:{label:x=>`${x.label}: ${x.raw}개 (${pct(x.raw,sum(x.dataset.data)).toFixed(0)}%)`}}}}});
+}
+function opsMonths(ms){ const o=ms.filter(m=>RAW.ops[m]); return o.length?o:RAW.months.filter(m=>RAW.ops[m]); }
+function renderOps(ms){
+  const om=opsMonths(ms), O=RAW.ops;
+  draw('opsRateChart',{type:'line',data:{labels:om.map(fmtM),datasets:[
+    {label:'해피콜',data:om.map(m=>+pct(O[m].hc,O[m].cases-(O[m].hc_excl||0)).toFixed(1)),borderColor:css('--c1'),tension:.3},
+    {label:'시뮬레이션',data:om.map(m=>+pct(O[m].sim,O[m].cases).toFixed(1)),borderColor:css('--c2'),tension:.3},
+    {label:'가이드',data:om.map(m=>+pct(O[m].guide,O[m].cases).toFixed(1)),borderColor:css('--c3'),tension:.3}]},
+    options:baseOpts({scales:{x:{grid:{display:false},ticks:{color:css('--muted')}},y:{beginAtZero:true,max:100,grid:{color:css('--line')},border:{display:false},ticks:{color:css('--muted'),callback:v=>v+'%'}}},
+      plugins:{legend:{position:'bottom',labels:{color:css('--muted'),boxWidth:10,font:{size:11}}},tooltip:{callbacks:{label:x=>`${x.dataset.label}: ${x.raw}%`}}}})});
+  draw('surgChart',{type:'bar',data:{labels:om.map(fmtM),datasets:[
+    {label:'골이식',data:om.map(m=>O[m].bone_s+O[m].bone_c),backgroundColor:css('--c1')},
+    {label:'발치 즉시 식립',data:om.map(m=>O[m].ext),backgroundColor:css('--c2')},
+    {label:'상악동 거상',data:om.map(m=>O[m].sinus),backgroundColor:css('--c3')}]},options:baseOpts()});
+  const drs=[...new Set(om.flatMap(m=>Object.keys(O[m].dr||{})))].sort((x,y)=>sum(om.map(m=>O[m].dr[y]||0))-sum(om.map(m=>O[m].dr[x]||0)));
+  let h='<thead><tr><th>월</th><th>수술 건</th><th>장부 행</th><th>보험 식립</th>'+drs.map(d=>`<th>${d}</th>`).join('')+'<th>해피콜</th><th>시뮬</th><th>가이드</th></tr></thead><tbody>';
+  const T={cases:0,rows:0,ins:0,hc:0,hx:0,sim:0,guide:0}, TD={};
+  const cell=v=>v?`<td class="num">${v}</td>`:'<td class="num z">-</td>';
+  om.forEach(m=>{const o=O[m];T.cases+=o.cases;T.rows+=o.rows;T.ins+=o.ins;T.hc+=o.hc;T.hx+=o.hc_excl||0;T.sim+=o.sim;T.guide+=o.guide;
+    drs.forEach(d=>TD[d]=(TD[d]||0)+(o.dr[d]||0));
+    h+=`<tr><td>${m.slice(0,4)}.${m.slice(5)}</td><td class="num">${o.cases}</td><td class="num">${o.rows}</td><td class="num">${o.ins}</td>`+drs.map(d=>cell(o.dr[d])).join('')+`<td class="num">${pct(o.hc,o.cases-(o.hc_excl||0)).toFixed(0)}%</td><td class="num">${pct(o.sim,o.cases).toFixed(0)}%</td><td class="num">${pct(o.guide,o.cases).toFixed(0)}%</td></tr>`;});
+  h+=`</tbody><tfoot><tr><td>합계</td><td class="num">${T.cases}</td><td class="num">${T.rows}</td><td class="num">${T.ins}</td>`+drs.map(d=>`<td class="num">${TD[d]}</td>`).join('')+`<td class="num">${pct(T.hc,T.cases-T.hx).toFixed(0)}%</td><td class="num">${pct(T.sim,T.cases).toFixed(0)}%</td><td class="num">${pct(T.guide,T.cases).toFixed(0)}%</td></tr></tfoot>`;
+  document.getElementById('opsTable').innerHTML=h;
+  const st={}; Object.entries(RAW.staff_m).forEach(([k,v])=>{const [m,n]=k.split('|||'); if(om.includes(m)) st[n]=(st[n]||0)+v;});
+  const rows=Object.entries(st).sort((a,b)=>b[1]-a[1]).slice(0,10), mx=rows[0]?.[1]||1;
+  document.getElementById('staffBars').innerHTML=rows.map(([n,v])=>`<div class="bar-row"><span>${n}</span><div class="track"><div class="fill" style="width:${v/mx*100}%;background:var(--accent)"></div></div><span class="v">${v}</span></div>`).join('');
+}
+function renderRemoval(ms){
+  const tn=sum(ms.map(m=>RAW.siknew_monthly[m]||0)), tr=sum(ms.map(m=>RAW.jegeo_monthly[m]||0)), ti=sum(ms.map(m=>RAW.reimg_monthly[m]||0));
+  let rem={}, rei={}, src;
+  if(only2026(ms)){
+    Object.entries(RAW.rem_m).forEach(([k,v])=>{const [m,c]=k.split('|||'); if(ms.includes(m)) rem[c]=(rem[c]||0)+v;});
+    Object.entries(RAW.rei_m).forEach(([k,v])=>{const [m,c]=k.split('|||'); if(ms.includes(m)) rei[c]=(rei[c]||0)+v;});
+    src='선택한 2026년 기간 기준.';
+  } else { rem=RAW.removal_co_old; rei=RAW.reimplant_co_old; src='기존 대시보드 누적값(2024.01~2026.06 초). 2026년 선택 시 월별로 집계됩니다.'; }
+  const top=Object.entries(rem).sort((a,b)=>b[1]-a[1]).slice(0,5), mx=top[0]?.[1]||1;
+  document.getElementById('removalCard').innerHTML=`<h3>요약</h3>
+    <div class="mini"><div><div class="n">${(tr/ms.length).toFixed(1)}</div><div class="l">월 평균 제거</div></div>
+    <div><div class="n">${pct(tr,tn).toFixed(1)}%</div><div class="l">신규 대비 제거율</div></div></div>
+    <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">제거된 픽스처 업체</div>
+    <div class="stack">${top.map(([c,v])=>`<div class="bar-row"><span>${c}</span><div class="track"><div class="fill" style="width:${v/mx*100}%;background:var(--c2)"></div></div><span class="v">${v}</span></div>`).join('')}</div>
+    <div class="note">${src}</div>`;
+  draw('removalChart',{type:'bar',data:{labels:ms.map(fmtM),datasets:[
+    {label:'제거',data:ms.map(m=>RAW.jegeo_monthly[m]||0),backgroundColor:css('--c2')},
+    {label:'재식립',data:ms.map(m=>RAW.reimg_monthly[m]||0),backgroundColor:css('--c3')}]},options:baseOpts()});
+  const r=Object.entries(rei).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  draw('reimplantCoChart',{type:'bar',data:{labels:r.map(x=>x[0]),datasets:[{label:'재식립',data:r.map(x=>x[1]),backgroundColor:r.map(x=>coColor(x[0]))}]},
+    options:baseOpts({indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:css('--line')},ticks:{color:css('--muted')}},y:{grid:{display:false},ticks:{color:css('--ink')}}}})});
+  document.getElementById('reiNote').textContent=src;
+}
+function renderReasons(){
+  const ms=RAW.months.slice(-6).filter(m=>RAW.ops[m]&&Object.keys(RAW.ops[m].reasons||{}).length);
+  const box=document.getElementById('reasonBox');
+  if(!ms.length){box.innerHTML='<div class="note">기록 없음</div>';return;}
+  box.innerHTML=ms.map(m=>{const r=Object.entries(RAW.ops[m].reasons).sort((a,b)=>b[1]-a[1]), mx=r[0][1], t=sum(r.map(x=>x[1]));
+    return `<div><div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">${m.slice(0,4)}.${m.slice(5)} · ${t}건</div><div class="stack">`+
+      r.map(([k,v])=>`<div class="bar-row" style="grid-template-columns:110px 1fr 32px"><span>${k}</span><div class="track"><div class="fill" style="width:${v/mx*100}%;background:var(--c2)"></div></div><span class="v">${v}</span></div>`).join('')+'</div></div>';}).join('');
+}
+function renderSize(ms,cs){
+  const mS=new Set(ms), cS=new Set(cs), dia={}, len={}, combo={};
+  Object.entries(RAW.size_mco).forEach(([k,n])=>{const [m,c,d,l]=k.split('|||'); if(!mS.has(m)||!cS.has(c)||+l<5) return;
+    dia[d]=(dia[d]||0)+n; len[l]=(len[l]||0)+n; combo[d+'×'+l]=(combo[d+'×'+l]||0)+n;});
+  const D=Object.keys(dia).sort((a,b)=>a-b), Ls=Object.keys(len).sort((a,b)=>a-b);
+  const o=baseOpts({plugins:{legend:{display:false}}});
+  draw('diaChart',{type:'bar',data:{labels:D.map(d=>d),datasets:[{label:'신규',data:D.map(d=>dia[d]),backgroundColor:css('--c1')}]},options:o});
+  draw('lenChart',{type:'bar',data:{labels:Ls.map(l=>l),datasets:[{label:'신규',data:Ls.map(l=>len[l]),backgroundColor:css('--c1')}]},options:baseOpts({plugins:{legend:{display:false}}})});
+  const mx=Math.max(1,...Object.values(combo)), rgb=css('--heat');
+  let h='<table class="heat"><thead><tr><th>직경 \\ 길이</th>'+Ls.map(l=>`<th>${l}</th>`).join('')+'<th>합계</th></tr></thead><tbody>';
+  D.forEach(d=>{h+=`<tr><th>${d}</th>`+Ls.map(l=>{const v=combo[d+'×'+l]||0; if(!v) return '<td class="z">·</td>'; const a=.12+.78*(v/mx);
+    return `<td style="background:rgba(${rgb},${a.toFixed(2)});color:${a>.5?'#fff':'var(--ink)'};font-weight:600">${v}</td>`;}).join('')+`<td><b>${dia[d]}</b></td></tr>`;});
+  document.getElementById('sizeHeatmap').innerHTML=h+'</tbody></table>';
+}
+function renderDen(){
+  const rows=RAW.den;
+  let h='<thead><tr><th>날짜</th><th>구분</th><th>시술</th><th>치식</th><th>타입</th><th>직경</th><th>길이</th><th>수량</th><th>골이식</th><th>Ext</th><th>Sinus</th></tr></thead><tbody>';
+  rows.forEach(r=>{h+=`<tr><td>${r.date}</td><td>${r.kind}</td><td>${r.proc}</td><td class="num">${r.tooth}</td><td>${r.fx}</td><td class="num">${r.d}</td><td class="num">${r.l}</td><td class="num">${r.n}</td><td class="${r.bone?'':'z'}">${r.bone||'-'}</td><td class="${r.ext?'':'z'}">${r.ext||'-'}</td><td class="${r.sinus?'':'z'}">${r.sinus||'-'}</td></tr>`;});
+  document.getElementById('denTable').innerHTML=h+'</tbody>';
+  const tot=sum(rows.map(r=>r.n)), y25=sum(rows.filter(r=>r.date<'2026').map(r=>r.n)), y26=tot-y25;
+  const bone=rows.filter(r=>r.bone).length, ext=rows.filter(r=>r.ext).length;
+  const ty={}; rows.forEach(r=>ty[r.fx]=(ty[r.fx]||0)+r.n);
+  const sz={}; rows.forEach(r=>{const k=r.d+'×'+r.l; sz[k]=(sz[k]||0)+r.n;});
+  const top=Object.entries(sz).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const m26=RAW.months.filter(m=>m>='2026'), log26=sum(m26.map(m=>mval(m,'Den')));
+  document.getElementById('denSummary').innerHTML=`
+    <div class="mini"><div><div class="n">${tot}</div><div class="l">기록된 픽스처 (${rows.length}행)</div></div><div><div class="n">${y25} / ${y26}</div><div class="l">2025 / 2026</div></div></div>
+    <div class="stack" style="font-size:13px">
+      <div>타입: ${Object.entries(ty).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(' · ')}</div>
+      <div>골이식 동반 ${bone}행 · 발치 즉시 ${ext}행</div>
+      <div>많이 쓴 사이즈: ${top.map(([k,v])=>`${k} (${v})`).join(', ')}</div>
+      <div>재식립 사례: ${rows.filter(r=>r.proc==='재식립').map(r=>r.date).join(', ')||'없음'}</div>
+    </div>
+    <div class="note">수술 기록 기준 2026년 이후 Den 신규 식립은 ${log26}개입니다. 덴티움 시트(${y26}개)와 다르면 시트 업데이트가 필요합니다.</div>`;
+}
+function renderTable(ms,cs){
+  const used=cs.filter(c=>ms.some(m=>mval(m,c)));
+  let h='<thead><tr><th>월</th>'+used.map(c=>`<th>${c}</th>`).join('')+'<th>신규 합계</th><th>제거</th><th>재식립</th></tr></thead><tbody>';
+  const tot=used.map(()=>0); let g=0,r=0,i=0;
+  ms.forEach(m=>{const v=used.map(c=>mval(m,c)); const t=sum(v), jr=RAW.jegeo_monthly[m]||0, ri=RAW.reimg_monthly[m]||0; v.forEach((x,k)=>tot[k]+=x); g+=t; r+=jr; i+=ri;
+    h+=`<tr><td>${m.slice(0,4)}.${m.slice(5)}</td>`+v.map(x=>x?`<td class="num">${x}</td>`:'<td class="z">-</td>').join('')+`<td class="num"><b>${t}</b></td><td class="num" >${jr}</td><td class="num" >${ri}</td></tr>`;});
+  h+='</tbody><tfoot><tr><td>합계</td>'+tot.map(x=>`<td class="num">${x}</td>`).join('')+`<td class="num">${g}</td><td class="num">${r}</td><td class="num">${i}</td></tr></tfoot>`;
+  document.getElementById('detailTable').innerHTML=h;
+}
+function applyFilter(){
+  const ms=months(), cs=cos();
+  try{localStorage.setItem('implant-filter',JSON.stringify({y:document.getElementById('yearFilter').value,c:document.getElementById('coFilter').value}))}catch(e){}
+  renderKPIs(ms,cs); renderTrend(ms,cs); renderBar(ms,cs); renderShare(ms,cs); renderType(ms,cs);
+  renderOps(ms); renderRemoval(ms); renderSize(ms,cs); renderTable(ms,cs);
+}
+function renderAll(){ renderInsights(); renderOsstemLine(); renderDen(); renderReasons(); applyFilter(); }
+
+(function(){
+  const M=RAW.months, L=M[M.length-1], ys=[...new Set(M.map(m=>m.slice(0,4)))];
+  const sel=document.getElementById('yearFilter');
+  const opt=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;sel.appendChild(o);};
+  opt('all',`전체 (${M.length}개월)`); opt('last12','최근 12개월');
+  ys.forEach(y=>{const n=M.filter(m=>m.startsWith(y)); opt(y, n.length<12?`${y}년 (${+n[0].slice(5)}~${+n[n.length-1].slice(5)}월)`:`${y}년`);});
+  sel.value=ys[ys.length-1];
+  document.getElementById('periodSub').textContent=`${M[0].slice(0,4)}년 ${+M[0].slice(5)}월 ~ ${L.slice(0,4)}년 ${+L.slice(5)}월 · 신규 식립·제거·재식립·수술 운영 지표`;
+  document.getElementById('updBadge').textContent=`최근 반영: ${L.slice(0,4)}년 ${+L.slice(5)}월${RAW.updated?' · '+RAW.updated+' 갱신':''}`;
+})();
+RAW.companies.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;document.getElementById('coFilter').appendChild(o);});
+try{const s=JSON.parse(localStorage.getItem('implant-filter')||'null'); if(s){if([...document.getElementById('yearFilter').options].some(o=>o.value===s.y)) document.getElementById('yearFilter').value=s.y; document.getElementById('coFilter').value=s.c||'all';}}catch(e){}
+document.getElementById('yearFilter').addEventListener('change',applyFilter);
+document.getElementById('coFilter').addEventListener('change',applyFilter);
+if(window.Chart){ Chart.defaults.font.family=css('--f-body'); renderAll(); }
+else { renderInsights(); renderDen(); }
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>window.Chart&&renderAll());
+new MutationObserver(()=>window.Chart&&renderAll()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+</script>
